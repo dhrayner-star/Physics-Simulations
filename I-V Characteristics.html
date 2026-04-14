@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>I–V Characteristics Simulation</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #2563eb;
+      --accent2: #0f766e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .wrap {
+      max-width: 1450px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.95rem;
+    }
+
+    .intro {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.38fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .control {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .control label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .value {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    input[type="range"],
+    select {
+      width: 100%;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: white;
+      font-size: 0.95rem;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+
+    button.secondary {
+      background: var(--accent2);
+    }
+
+    button.ghost {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .stat .label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat .big {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .sim-area {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .side-grid {
+      display: grid;
+      grid-template-rows: auto auto;
+      gap: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background: #f3f4f6;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .info-box {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      font-size: 0.95rem;
+      line-height: 1.45;
+      min-height: 46px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .footer-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 1080px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .controls,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>I–V Characteristics Simulation</h1>
+    <p class="intro">
+      Investigate the current–voltage behaviour of an ohmic resistor, a filament lamp and a diode.
+      Change the potential difference, record the readings and plot a current against voltage graph.
+    </p>
+
+    <div class="layout">
+      <section class="card">
+        <div class="controls">
+          <div class="control">
+            <label for="componentSelect">Component</label>
+            <select id="componentSelect">
+              <option value="resistor">Ohmic resistor</option>
+              <option value="lamp">Filament lamp</option>
+              <option value="diode">Diode</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label for="voltageSlider">
+              Potential difference: <span id="voltageLabel" class="value">2.0 V</span>
+            </label>
+            <input id="voltageSlider" type="range" min="-6" max="6" step="0.1" value="2" />
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="recordBtn">Record reading</button>
+          <button id="gradientBtn" class="secondary">Calculate gradient</button>
+          <button id="clearBtn" class="ghost">Clear results</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Ammeter reading</div>
+            <div class="big" id="ammeterReading">0.333 A</div>
+          </div>
+          <div class="stat">
+            <div class="label">Voltmeter reading</div>
+            <div class="big" id="voltmeterReading">2.00 V</div>
+          </div>
+          <div class="stat">
+            <div class="label">Instantaneous resistance</div>
+            <div class="big" id="resistanceReading">6.01 Ω</div>
+          </div>
+        </div>
+
+        <div class="sim-area">
+          <canvas id="circuitCanvas" width="900" height="520"></canvas>
+        </div>
+
+        <div class="footer-note">
+          Record a range of readings for the selected component and use the graph to identify the characteristic shape.
+        </div>
+      </section>
+
+      <div class="side-grid">
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;">Results table</h2>
+          <p class="small">
+            Record both positive and negative voltages where appropriate so you can see the full I–V characteristic.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Voltage (V)</th>
+                <th>Current (A)</th>
+                <th>Resistance (Ω)</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <tr><td colspan="4" class="small">No readings recorded yet.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;">Graph: Current against Voltage</h2>
+          <p class="small">
+            Plot current on the y-axis and voltage on the x-axis. The graph should match the component selected.
+          </p>
+          <canvas id="graphCanvas" width="620" height="420"></canvas>
+          <div class="info-box" id="graphInfo">Record some readings, then use the gradient button when appropriate.</div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const componentSelect = document.getElementById("componentSelect");
+    const voltageSlider = document.getElementById("voltageSlider");
+    const voltageLabel = document.getElementById("voltageLabel");
+    const ammeterReading = document.getElementById("ammeterReading");
+    const voltmeterReading = document.getElementById("voltmeterReading");
+    const resistanceReading = document.getElementById("resistanceReading");
+    const resultsBody = document.getElementById("resultsBody");
+    const graphInfo = document.getElementById("graphInfo");
+
+    const circuitCanvas = document.getElementById("circuitCanvas");
+    const cctx = circuitCanvas.getContext("2d");
+    const graphCanvas = document.getElementById("graphCanvas");
+    const gctx = graphCanvas.getContext("2d");
+
+    const recordBtn = document.getElementById("recordBtn");
+    const gradientBtn = document.getElementById("gradientBtn");
+    const clearBtn = document.getElementById("clearBtn");
+
+    let results = [];
+
+    function round(value, dp) {
+      const factor = Math.pow(10, dp);
+      return Math.round(value * factor) / factor;
+    }
+
+    function getReading() {
+      const component = componentSelect.value;
+      const V = parseFloat(voltageSlider.value);
+      let I;
+
+      if (component === "resistor") {
+        const R = 6;
+        I = V / R;
+      } else if (component === "lamp") {
+        const absV = Math.abs(V);
+        const absI = (0.42 * absV) / (1 + 0.28 * absV + 0.03 * absV * absV);
+        I = V < 0 ? -absI : absI;
+      } else {
+        if (V <= 0) {
+          I = 0;
+        } else if (V < 0.6) {
+          I = 0;
+        } else {
+          I = 0.18 * Math.pow(V - 0.6, 1.35);
+        }
+      }
+
+      const displayedV = round(V, 2);
+      const displayedI = round(I, 3);
+      const displayedR = Math.abs(displayedI) > 0 ? round(displayedV / displayedI, 2) : "∞";
+
+      return {
+        component,
+        voltage: displayedV,
+        current: displayedI,
+        resistance: displayedR
+      };
+    }
+
+    function updateReadout() {
+      const reading = getReading();
+      voltageLabel.textContent = `${reading.voltage.toFixed(1)} V`;
+      ammeterReading.textContent = `${reading.current.toFixed(3)} A`;
+      voltmeterReading.textContent = `${reading.voltage.toFixed(2)} V`;
+      resistanceReading.textContent =
+        reading.resistance === "∞" ? "∞" : `${reading.resistance.toFixed(2)} Ω`;
+      drawCircuit(reading);
+    }
+
+    function drawMeter(ctx, x, y, label, fill, readout) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      ctx.arc(x, y, 35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "bold 24px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, x, y + 5);
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "14px Arial";
+      ctx.fillText(readout, x, y + 58);
+      ctx.restore();
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+    }
+
+    function drawBattery(ctx, x, y) {
+      ctx.save();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y - 14);
+      ctx.lineTo(x, y + 14);
+      ctx.moveTo(x + 10, y - 24);
+      ctx.lineTo(x + 10, y + 24);
+      ctx.moveTo(x + 26, y - 14);
+      ctx.lineTo(x + 26, y + 14);
+      ctx.moveTo(x + 36, y - 24);
+      ctx.lineTo(x + 36, y + 24);
+      ctx.stroke();
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "#111827";
+      ctx.fillText("Supply", x - 2, y - 36);
+      ctx.restore();
+    }
+
+    function drawResistorSymbol(ctx, x1, x2, y) {
+      ctx.save();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+
+      const cx = (x1 + x2) / 2;
+      const boxWidth = 90;
+      const left = cx - boxWidth / 2;
+      const right = cx + boxWidth / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(left, y);
+      ctx.moveTo(right, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
+
+      ctx.strokeRect(left, y - 14, boxWidth, 28);
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "16px Arial";
+      ctx.fillText("Ohmic resistor", x1 + 110, y - 24);
+      ctx.restore();
+    }
+
+    function drawLampSymbol(ctx, x1, x2, y) {
+      ctx.save();
+      const cx = (x1 + x2) / 2;
+
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(cx - 28, y);
+      ctx.moveTo(cx + 28, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, y, 28, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx - 16, y - 16);
+      ctx.lineTo(cx + 16, y + 16);
+      ctx.moveTo(cx + 16, y - 16);
+      ctx.lineTo(cx - 16, y + 16);
+      ctx.stroke();
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "16px Arial";
+      ctx.fillText("Filament lamp", x1 + 50, y - 40);
+      ctx.restore();
+    }
+
+    function drawDiodeSymbol(ctx, x1, x2, y) {
+      ctx.save();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      const cx = (x1 + x2) / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(cx - 32, y);
+      ctx.moveTo(cx + 20, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx - 32, y - 22);
+      ctx.lineTo(cx + 20, y);
+      ctx.lineTo(cx - 32, y + 22);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx + 20, y - 22);
+      ctx.lineTo(cx + 20, y + 22);
+      ctx.stroke();
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "16px Arial";
+      ctx.fillText("Diode", x1 + 92, y - 40);
+      ctx.restore();
+    }
+
+    function drawCircuit(reading) {
+      const ctx = cctx;
+      const w = circuitCanvas.width;
+      const h = circuitCanvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const topY = 110;
+      const bottomY = 380;
+      const leftX = 85;
+      const rightX = 800;
+
+      ctx.fillStyle = "#fcfcfd";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(leftX, topY);
+      ctx.lineTo(rightX, topY);
+      ctx.lineTo(rightX, bottomY);
+      ctx.lineTo(leftX, bottomY);
+      ctx.lineTo(leftX, topY);
+      ctx.stroke();
+
+      drawBattery(ctx, 220, topY);
+      drawMeter(ctx, 620, topY, "A", "#e5eefc", `${reading.current.toFixed(3)} A`);
+      drawMeter(ctx, 450, 245, "V", "#ecfeff", `${reading.voltage.toFixed(2)} V`);
+
+      const compStart = 250;
+      const compEnd = 650;
+      const compY = bottomY;
+
+      if (reading.component === "resistor") {
+        drawResistorSymbol(ctx, compStart, compEnd, compY);
+      } else if (reading.component === "lamp") {
+        drawLampSymbol(ctx, compStart, compEnd, compY);
+      } else {
+        drawDiodeSymbol(ctx, compStart, compEnd, compY);
+      }
+
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+
+      ctx.beginPath();
+      ctx.moveTo(compStart, compY);
+      ctx.lineTo(compStart, 300);
+      ctx.lineTo(410, 300);
+      ctx.lineTo(410, 245);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(compEnd, compY);
+      ctx.lineTo(compEnd, 300);
+      ctx.lineTo(490, 300);
+      ctx.lineTo(490, 245);
+      ctx.stroke();
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "17px Arial";
+      ctx.fillText("Series ammeter", 558, 42);
+      ctx.fillText("Voltmeter across component", 330, 175);
+      ctx.fillText("Change the supply voltage and record the readings", 225, 470);
+    }
+
+    function renderTable() {
+      if (!results.length) {
+        resultsBody.innerHTML = '<tr><td colspan="4" class="small">No readings recorded yet.</td></tr>';
+        return;
+      }
+
+      resultsBody.innerHTML = results.map((r, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${r.voltage.toFixed(2)}</td>
+          <td>${r.current.toFixed(3)}</td>
+          <td>${r.resistance === "∞" ? "∞" : r.resistance.toFixed(2)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function chooseNiceStep(maxVal) {
+      if (maxVal <= 0.2) return 0.02;
+      if (maxVal <= 0.5) return 0.05;
+      if (maxVal <= 1) return 0.1;
+      if (maxVal <= 2) return 0.2;
+      if (maxVal <= 5) return 0.5;
+      if (maxVal <= 10) return 1;
+      return 2;
+    }
+
+    function getGraphPoints() {
+      return results.map(r => ({ x: r.voltage, y: r.current }));
+    }
+
+    function getBestFit(points) {
+      const n = points.length;
+      if (n < 2) return null;
+
+      let sumX = 0;
+      let sumY = 0;
+      let sumXY = 0;
+      let sumXX = 0;
+
+      for (const p of points) {
+        sumX += p.x;
+        sumY += p.y;
+        sumXY += p.x * p.y;
+        sumXX += p.x * p.x;
+      }
+
+      const denominator = n * sumXX - sumX * sumX;
+      if (denominator === 0) return null;
+
+      const m = (n * sumXY - sumX * sumY) / denominator;
+      const c = (sumY - m * sumX) / n;
+      return { m, c };
+    }
+
+    function drawGraph() {
+      const ctx = gctx;
+      const w = graphCanvas.width;
+      const h = graphCanvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, w, h);
+
+      const points = getGraphPoints();
+      const padL = 90;
+      const padR = 24;
+      const padT = 24;
+      const padB = 58;
+      const gx = padL;
+      const gy = padT;
+      const gw = w - padL - padR;
+      const gh = h - padT - padB;
+
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(gx, gy);
+      ctx.lineTo(gx, gy + gh);
+      ctx.lineTo(gx + gw, gy + gh);
+      ctx.stroke();
+
+      const currentAbsMax = points.length ? Math.max(...points.map(p => Math.abs(p.y)), 0.2) : 0.5;
+      const voltageAbsMax = points.length ? Math.max(...points.map(p => Math.abs(p.x)), 1) : 6;
+
+      const xMax = Math.max(6, Math.ceil(voltageAbsMax));
+      const xMin = -xMax;
+
+      let yTop;
+      if (componentSelect.value === "resistor") {
+        yTop = Math.max(0.6, Math.ceil(currentAbsMax * 1.25 * 10) / 10);
+      } else if (componentSelect.value === "lamp") {
+        yTop = Math.max(0.6, Math.ceil(currentAbsMax * 1.2 * 10) / 10);
+      } else {
+        yTop = Math.max(0.4, Math.ceil(currentAbsMax * 1.25 * 10) / 10);
+      }
+
+      const yMin = componentSelect.value === "diode" ? -0.1 : -yTop;
+      const xRange = xMax - xMin;
+      const yRange = yTop - yMin;
+
+      ctx.font = "12px Arial";
+      ctx.strokeStyle = "#e5e7eb";
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#374151";
+
+      const xStep = 1;
+      let yStep;
+      if (yRange <= 0.3) {
+        yStep = 0.02;
+      } else if (yRange <= 0.6) {
+        yStep = 0.05;
+      } else if (yRange <= 1.2) {
+        yStep = 0.1;
+      } else {
+        yStep = 0.2;
+      }
+
+      for (let x = xMin; x <= xMax + 1e-9; x += xStep) {
+        const px = gx + ((x - xMin) / xRange) * gw;
+        ctx.beginPath();
+        ctx.moveTo(px, gy);
+        ctx.lineTo(px, gy + gh);
+        ctx.stroke();
+        ctx.fillText(Number(x.toFixed(2)).toString(), px - 8, gy + gh + 18);
+      }
+
+      for (let y = yMin; y <= yTop + 1e-9; y += yStep) {
+        const py = gy + gh - ((y - yMin) / yRange) * gh;
+        ctx.beginPath();
+        ctx.moveTo(gx, py);
+        ctx.lineTo(gx + gw, py);
+        ctx.stroke();
+        ctx.fillText(Number(y.toFixed(2)).toString(), 52, py + 4);
+      }
+
+      const originX = gx + ((0 - xMin) / xRange) * gw;
+      const originY = gy + gh - ((0 - yMin) / yRange) * gh;
+
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(originX, gy);
+      ctx.lineTo(originX, gy + gh);
+      ctx.moveTo(gx, originY);
+      ctx.lineTo(gx + gw, originY);
+      ctx.stroke();
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "15px Arial";
+      ctx.fillText("Voltage (V)", gx + gw / 2 - 30, h - 18);
+
+      ctx.save();
+      ctx.translate(28, gy + gh / 2 + 25);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText("Current (A)", 0, 0);
+      ctx.restore();
+
+      for (const p of points) {
+        const px = gx + ((p.x - xMin) / xRange) * gw;
+        const py = gy + gh - ((p.y - yMin) / yRange) * gh;
+        ctx.fillStyle = "#2563eb";
+        ctx.beginPath();
+        ctx.arc(px, py, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (results.length >= 6 && componentSelect.value === "resistor") {
+        const fit = getBestFit(points);
+        if (fit) {
+          const y1 = fit.m * xMin + fit.c;
+          const y2 = fit.m * xMax + fit.c;
+          const px1 = gx;
+          const py1 = gy + gh - ((y1 - yMin) / yRange) * gh;
+          const px2 = gx + gw;
+          const py2 = gy + gh - ((y2 - yMin) / yRange) * gh;
+          ctx.strokeStyle = "#b91c1c";
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(px1, py1);
+          ctx.lineTo(px2, py2);
+          ctx.stroke();
+        }
+      } else if (results.length >= 6 && (componentSelect.value === "lamp" || componentSelect.value === "diode")) {
+        ctx.strokeStyle = "#b91c1c";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+
+        let started = false;
+        for (let v = xMin; v <= xMax + 1e-9; v += 0.05) {
+          let current;
+          if (componentSelect.value === "lamp") {
+            const absV = Math.abs(v);
+            const absI = (0.42 * absV) / (1 + 0.28 * absV + 0.03 * absV * absV);
+            current = v < 0 ? -absI : absI;
+          } else {
+            if (v <= 0) {
+              current = 0;
+            } else if (v < 0.6) {
+              current = 0;
+            } else {
+              current = 0.18 * Math.pow(v - 0.6, 1.35);
+            }
+          }
+
+          const px = gx + ((v - xMin) / xRange) * gw;
+          const py = gy + gh - ((current - yMin) / yRange) * gh;
+
+          if (!started) {
+            ctx.moveTo(px, py);
+            started = true;
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+
+        ctx.stroke();
+      }
+
+      graphInfo.textContent = "Record some readings, then use the gradient button when appropriate.";
+    }
+
+    function showGradient() {
+      const points = getGraphPoints();
+      if (points.length < 2) {
+        graphInfo.textContent = "Record at least two readings before calculating a gradient.";
+        return;
+      }
+
+      if (componentSelect.value === "diode" || componentSelect.value === "lamp") {
+        graphInfo.textContent = "A single gradient is not very useful here because the graph is not linear.";
+        return;
+      }
+
+      const fit = getBestFit(points);
+      if (!fit) {
+        graphInfo.textContent = "Gradient could not be calculated from these points.";
+        return;
+      }
+
+      graphInfo.innerHTML = `Gradient = ΔI ÷ ΔV = <strong>${fit.m.toFixed(3)} A/V</strong><br>For an I–V graph, the gradient represents <strong>1/R</strong>, so resistance = <strong>1 ÷ gradient = ${(1 / fit.m).toFixed(2)} Ω</strong>.`;
+    }
+
+    function clearIfComponentChanged() {
+      results = [];
+      renderTable();
+      drawGraph();
+    }
+
+    voltageSlider.addEventListener("input", updateReadout);
+    voltageSlider.addEventListener("change", updateReadout);
+
+    componentSelect.addEventListener("change", () => {
+      updateReadout();
+      clearIfComponentChanged();
+    });
+
+    recordBtn.addEventListener("click", () => {
+      const reading = getReading();
+      results.push(reading);
+      renderTable();
+      drawGraph();
+    });
+
+    gradientBtn.addEventListener("click", showGradient);
+
+    clearBtn.addEventListener("click", () => {
+      results = [];
+      renderTable();
+      drawGraph();
+      graphInfo.textContent = "Record some readings to see the characteristic curve.";
+    });
+
+    updateReadout();
+    renderTable();
+    drawGraph();
+  </script>
+</body>
+</html>
