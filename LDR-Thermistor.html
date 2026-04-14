@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thermistor and LDR Simulation</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #2563eb;
+      --accent2: #0f766e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .wrap {
+      max-width: 1450px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.95rem;
+    }
+
+    .intro {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.38fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .control {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .control label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .value {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    input[type="range"],
+    select {
+      width: 100%;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: white;
+      font-size: 0.95rem;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+
+    button.ghost {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .stat .label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat .big {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .sim-area {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .side-grid {
+      display: grid;
+      grid-template-rows: auto auto;
+      gap: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background: #f3f4f6;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .info-box {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      font-size: 0.95rem;
+      line-height: 1.45;
+      min-height: 46px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .footer-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 1080px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .controls,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Thermistor and LDR Simulation</h1>
+    <p class="intro">
+      Investigate how the resistance of a thermistor changes with temperature and how the resistance of an LDR changes with light intensity.
+      Change the variable, record readings, and plot the graph of resistance.
+    </p>
+
+    <div class="layout">
+      <section class="card">
+        <div class="controls">
+          <div class="control">
+            <label for="componentSelect">Component</label>
+            <select id="componentSelect">
+              <option value="thermistor">Thermistor</option>
+              <option value="ldr">LDR</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label id="sliderLabel" for="valueSlider">
+              Temperature: <span id="sliderValue" class="value">20 °C</span>
+            </label>
+            <input id="valueSlider" type="range" min="0" max="100" step="1" value="20" />
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="recordBtn">Record reading</button>
+          <button id="clearBtn" class="ghost">Clear results</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label" id="statLabel1">Temperature</div>
+            <div class="big" id="statValue1">20 °C</div>
+          </div>
+          <div class="stat">
+            <div class="label">Resistance</div>
+            <div class="big" id="resistanceReading">4.45 kΩ</div>
+          </div>
+          <div class="stat">
+            <div class="label">Component</div>
+            <div class="big" id="componentName">Thermistor</div>
+          </div>
+        </div>
+
+        <div class="sim-area">
+          <canvas id="circuitCanvas" width="900" height="520"></canvas>
+        </div>
+
+        <div class="footer-note">
+          Use the slider to change the temperature or light intensity, then record the resistance shown.
+        </div>
+      </section>
+
+      <div class="side-grid">
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;">Results table</h2>
+          <p class="small">Take at least 6 readings across the range so the shape of the graph becomes clear.</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th id="tableHead1">Temperature (°C)</th>
+                <th>Resistance (kΩ)</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <tr><td colspan="3" class="small">No readings recorded yet.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <h2 id="graphTitle" style="margin-top:0; font-size:1.25rem;">Graph: Resistance against Temperature</h2>
+          <p id="graphSubtitle" class="small">Plot resistance on the y-axis and temperature on the x-axis.</p>
+          <canvas id="graphCanvas" width="620" height="420"></canvas>
+          <div class="info-box" id="graphInfo">Record some readings to see how the resistance changes.</div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const componentSelect = document.getElementById("componentSelect");
+    const valueSlider = document.getElementById("valueSlider");
+    const sliderLabel = document.getElementById("sliderLabel");
+    const statLabel1 = document.getElementById("statLabel1");
+    const statValue1 = document.getElementById("statValue1");
+    const componentName = document.getElementById("componentName");
+    const resistanceReading = document.getElementById("resistanceReading");
+    const tableHead1 = document.getElementById("tableHead1");
+    const graphTitle = document.getElementById("graphTitle");
+    const graphSubtitle = document.getElementById("graphSubtitle");
+    const resultsBody = document.getElementById("resultsBody");
+    const graphInfo = document.getElementById("graphInfo");
+
+    const circuitCanvas = document.getElementById("circuitCanvas");
+    const cctx = circuitCanvas.getContext("2d");
+    const graphCanvas = document.getElementById("graphCanvas");
+    const gctx = graphCanvas.getContext("2d");
+
+    const recordBtn = document.getElementById("recordBtn");
+    const clearBtn = document.getElementById("clearBtn");
+
+    let results = [];
+
+    function round(value, dp) {
+      const factor = Math.pow(10, dp);
+      return Math.round(value * factor) / factor;
+    }
+
+    function getThermistorResistance(tempC) {
+      return 12000 * Math.exp(-0.035 * tempC) + 600;
+    }
+
+    function getLdrResistance(lightPct) {
+      return 18000 / (1 + 0.07 * lightPct) + 300;
+    }
+
+    function getReading() {
+      const component = componentSelect.value;
+      const value = parseFloat(valueSlider.value);
+      let resistanceOhms;
+
+      if (component === "thermistor") {
+        resistanceOhms = getThermistorResistance(value);
+      } else {
+        resistanceOhms = getLdrResistance(value);
+      }
+
+      return {
+        component,
+        value: round(value, 1),
+        resistanceOhms: round(resistanceOhms, 0),
+        resistanceKOhms: round(resistanceOhms / 1000, 2)
+      };
+    }
+
+    function updateLabelsForComponent() {
+      const component = componentSelect.value;
+
+      if (component === "thermistor") {
+        sliderLabel.innerHTML = `Temperature: <span id="sliderValue" class="value"></span>`;
+        statLabel1.textContent = "Temperature";
+        tableHead1.textContent = "Temperature (°C)";
+        graphTitle.textContent = "Graph: Resistance against Temperature";
+        graphSubtitle.textContent = "Plot resistance on the y-axis and temperature on the x-axis.";
+        componentName.textContent = "Thermistor";
+      } else {
+        sliderLabel.innerHTML = `Light intensity: <span id="sliderValue" class="value"></span>`;
+        statLabel1.textContent = "Light intensity";
+        tableHead1.textContent = "Light intensity (%)";
+        graphTitle.textContent = "Graph: Resistance against Light Intensity";
+        graphSubtitle.textContent = "Plot resistance on the y-axis and light intensity on the x-axis.";
+        componentName.textContent = "LDR";
+      }
+    }
+
+    function updateReadout() {
+      updateLabelsForComponent();
+      const sliderValueEl = document.getElementById("sliderValue");
+      const reading = getReading();
+
+      if (reading.component === "thermistor") {
+        sliderValueEl.textContent = `${reading.value.toFixed(0)} °C`;
+        statValue1.textContent = `${reading.value.toFixed(0)} °C`;
+      } else {
+        sliderValueEl.textContent = `${reading.value.toFixed(0)} %`;
+        statValue1.textContent = `${reading.value.toFixed(0)} %`;
+      }
+
+      resistanceReading.textContent = `${reading.resistanceKOhms.toFixed(2)} kΩ`;
+      drawCircuit(reading);
+    }
+
+    function drawBattery(ctx, x, y) {
+      ctx.save();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+
+      ctx.beginPath();
+      ctx.moveTo(x, y - 14);
+      ctx.lineTo(x, y + 14);
+      ctx.moveTo(x + 10, y - 24);
+      ctx.lineTo(x + 10, y + 24);
+      ctx.moveTo(x + 26, y - 14);
+      ctx.lineTo(x + 26, y + 14);
+      ctx.moveTo(x + 36, y - 24);
+      ctx.lineTo(x + 36, y + 24);
+      ctx.stroke();
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "16px Arial";
+      ctx.fillText("Battery", x - 2, y - 36);
+      ctx.restore();
+    }
+
+    function drawFixedResistor(ctx, x1, x2, y) {
+      ctx.save();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+
+      const cx = (x1 + x2) / 2;
+      const boxWidth = 90;
+      const left = cx - boxWidth / 2;
+      const right = cx + boxWidth / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(left, y);
+      ctx.moveTo(right, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
+
+      ctx.strokeRect(left, y - 14, boxWidth, 28);
+      ctx.restore();
+    }
+
+    function drawThermistorSymbol(ctx, x1, x2, y) {
+      ctx.save();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+
+      const cx = (x1 + x2) / 2;
+      const boxWidth = 90;
+      const left = cx - boxWidth / 2;
+      const right = cx + boxWidth / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(left, y);
+      ctx.moveTo(right, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
+
+      ctx.strokeRect(left, y - 14, boxWidth, 28);
+
+      ctx.beginPath();
+      ctx.moveTo(left - 12, y + 24);
+      ctx.lineTo(right + 10, y - 24);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(right + 10, y - 24);
+      ctx.lineTo(right + 3, y - 23);
+      ctx.lineTo(right + 8, y - 16);
+      ctx.stroke();
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "16px Arial";
+      ctx.fillText("Thermistor", x1 + 70, y - 40);
+      ctx.restore();
+    }
+
+    function drawLdrSymbol(ctx, x1, x2, y) {
+      ctx.save();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+
+      const cx = (x1 + x2) / 2;
+      const boxWidth = 90;
+      const left = cx - boxWidth / 2;
+      const right = cx + boxWidth / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(left, y);
+      ctx.moveTo(right, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
+
+      ctx.strokeRect(left, y - 14, boxWidth, 28);
+
+      ctx.beginPath();
+      ctx.moveTo(left - 42, y - 48);
+      ctx.lineTo(left - 14, y - 22);
+      ctx.moveTo(left - 30, y - 48);
+      ctx.lineTo(left - 2, y - 22);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(left - 14, y - 22);
+      ctx.lineTo(left - 20, y - 22);
+      ctx.lineTo(left - 16, y - 28);
+
+      ctx.moveTo(left - 2, y - 22);
+      ctx.lineTo(left - 8, y - 22);
+      ctx.lineTo(left - 4, y - 28);
+      ctx.stroke();
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "16px Arial";
+      ctx.fillText("LDR", x1 + 115, y - 40);
+      ctx.restore();
+    }
+
+    function drawThermometer(ctx, x, y, reading) {
+      ctx.save();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+      ctx.arc(x, y + 42, 12, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeRect(x - 5, y - 8, 10, 50);
+
+      const levelHeight = 42;
+      const filled = (reading.value / 100) * levelHeight;
+
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(x - 3, y + 42 - filled, 6, filled);
+      ctx.beginPath();
+      ctx.arc(x, y + 42, 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "15px Arial";
+      ctx.fillText("Temperature", x - 35, y - 18);
+      ctx.restore();
+    }
+
+    function drawLightSource(ctx, x, y, reading) {
+      ctx.save();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 2.5;
+
+      ctx.beginPath();
+      ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y + 18);
+      ctx.lineTo(x - 6, y + 36);
+      ctx.lineTo(x + 6, y + 36);
+      ctx.lineTo(x + 10, y + 18);
+      ctx.stroke();
+
+      const rays = 4 + Math.round(reading.value / 20);
+      for (let i = 0; i < rays; i++) {
+        const angle = -1.0 + i * (2.0 / Math.max(rays - 1, 1));
+        const x1 = x + Math.cos(angle) * 30;
+        const y1 = y - 6 + Math.sin(angle) * 30;
+        const x2 = x + Math.cos(angle) * 46;
+        const y2 = y - 6 + Math.sin(angle) * 46;
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "15px Arial";
+      ctx.fillText("Light source", x - 35, y - 40);
+      ctx.restore();
+    }
+
+    function drawCircuit(reading) {
+      const ctx = cctx;
+      const w = circuitCanvas.width;
+      const h = circuitCanvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const topY = 110;
+      const bottomY = 360;
+      const leftX = 85;
+      const rightX = 800;
+
+      const fixedStart = 190;
+      const fixedEnd = 360;
+      const sensorStart = 500;
+      const sensorEnd = 670;
+
+      ctx.fillStyle = "#fcfcfd";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(leftX, topY);
+      ctx.lineTo(rightX, topY);
+      ctx.lineTo(rightX, bottomY);
+      ctx.lineTo(leftX, bottomY);
+      ctx.lineTo(leftX, topY);
+      ctx.stroke();
+
+      drawBattery(ctx, 220, topY);
+      drawFixedResistor(ctx, fixedStart, fixedEnd, bottomY);
+
+      if (reading.component === "thermistor") {
+        drawThermistorSymbol(ctx, sensorStart, sensorEnd, bottomY);
+        drawThermometer(ctx, 735, 240, reading);
+      } else {
+        drawLdrSymbol(ctx, sensorStart, sensorEnd, bottomY);
+        drawLightSource(ctx, 735, 235, reading);
+      }
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "16px Arial";
+      ctx.fillText("Fixed resistor", 220, bottomY - 36);
+      ctx.fillText(`Resistance = ${reading.resistanceKOhms.toFixed(2)} kΩ`, 330, 462);
+      ctx.fillText("Change the slider, then record the resistance", 220, 490);
+    }
+
+    function renderTable() {
+      if (!results.length) {
+        resultsBody.innerHTML = '<tr><td colspan="3" class="small">No readings recorded yet.</td></tr>';
+        return;
+      }
+
+      resultsBody.innerHTML = results.map((r, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${r.value.toFixed(0)}</td>
+          <td>${r.resistanceKOhms.toFixed(2)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function drawGraph() {
+      const ctx = gctx;
+      const w = graphCanvas.width;
+      const h = graphCanvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, w, h);
+
+      const points = results.map(r => ({ x: r.value, y: r.resistanceKOhms }));
+
+      const padL = 90;
+      const padR = 24;
+      const padT = 24;
+      const padB = 58;
+      const gx = padL;
+      const gy = padT;
+      const gw = w - padL - padR;
+      const gh = h - padT - padB;
+
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(gx, gy);
+      ctx.lineTo(gx, gy + gh);
+      ctx.lineTo(gx + gw, gy + gh);
+      ctx.stroke();
+
+      const maxX = 100;
+      const maxYData = points.length ? Math.max(...points.map(p => p.y)) : 12;
+      const yStep = maxYData <= 5 ? 0.5 : maxYData <= 10 ? 1 : maxYData <= 20 ? 2 : 5;
+      const maxY = Math.max(yStep, Math.ceil(maxYData / yStep) * yStep);
+      const xStep = 10;
+
+      ctx.font = "12px Arial";
+      ctx.strokeStyle = "#e5e7eb";
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#374151";
+
+      for (let x = 0; x <= maxX; x += xStep) {
+        const px = gx + (x / maxX) * gw;
+        ctx.beginPath();
+        ctx.moveTo(px, gy);
+        ctx.lineTo(px, gy + gh);
+        ctx.stroke();
+        ctx.fillText(String(x), px - 6, gy + gh + 18);
+      }
+
+      for (let y = 0; y <= maxY + 1e-9; y += yStep) {
+        const py = gy + gh - (y / maxY) * gh;
+        ctx.beginPath();
+        ctx.moveTo(gx, py);
+        ctx.lineTo(gx + gw, py);
+        ctx.stroke();
+        ctx.fillText(Number(y.toFixed(2)).toString(), 52, py + 4);
+      }
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "15px Arial";
+      if (componentSelect.value === "thermistor") {
+        ctx.fillText("Temperature (°C)", gx + gw / 2 - 48, h - 18);
+      } else {
+        ctx.fillText("Light intensity (%)", gx + gw / 2 - 52, h - 18);
+      }
+
+      ctx.save();
+      ctx.translate(28, gy + gh / 2 + 25);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText("Resistance (kΩ)", 0, 0);
+      ctx.restore();
+
+      for (const p of points) {
+        const px = gx + (p.x / maxX) * gw;
+        const py = gy + gh - (p.y / maxY) * gh;
+        ctx.fillStyle = "#2563eb";
+        ctx.beginPath();
+        ctx.arc(px, py, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (results.length >= 6) {
+        ctx.strokeStyle = "#b91c1c";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+
+        let started = false;
+        for (let x = 0; x <= 100; x += 1) {
+          let y;
+          if (componentSelect.value === "thermistor") {
+            y = getThermistorResistance(x) / 1000;
+          } else {
+            y = getLdrResistance(x) / 1000;
+          }
+
+          const px = gx + (x / maxX) * gw;
+          const py = gy + gh - (y / maxY) * gh;
+
+          if (!started) {
+            ctx.moveTo(px, py);
+            started = true;
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+
+        ctx.stroke();
+      }
+
+      graphInfo.textContent = "Record at least 6 readings to reveal the smooth characteristic curve.";
+    }
+
+    valueSlider.addEventListener("input", updateReadout);
+    valueSlider.addEventListener("change", updateReadout);
+
+    componentSelect.addEventListener("change", () => {
+      results = [];
+      updateReadout();
+      renderTable();
+      drawGraph();
+    });
+
+    recordBtn.addEventListener("click", () => {
+      const reading = getReading();
+      results.push(reading);
+      renderTable();
+      drawGraph();
+    });
+
+    clearBtn.addEventListener("click", () => {
+      results = [];
+      renderTable();
+      drawGraph();
+      graphInfo.textContent = "Record some readings to see how the resistance changes.";
+    });
+
+    updateReadout();
+    renderTable();
+    drawGraph();
+  </script>
+</body>
+</html>
