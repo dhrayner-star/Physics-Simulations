@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Core Practical: Force, Mass and Acceleration</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #2563eb;
+      --accent2: #0f766e;
+      --warn: #b45309;
+      --good: #15803d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .wrap {
+      max-width: 1540px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.95rem;
+    }
+
+    .intro {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.45fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(230px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .control {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .control label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .value {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: white;
+      font-size: 0.95rem;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+
+    button.secondary { background: var(--accent2); }
+    button.warn { background: var(--warn); }
+    button.good { background: var(--good); }
+    button.ghost {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .stat .label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat .big {
+      font-size: 1.08rem;
+      font-weight: 700;
+    }
+
+    .sim-area {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .side-grid {
+      display: grid;
+      grid-template-rows: auto auto auto;
+      gap: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      text-align: center;
+    }
+
+    th { background: #f3f4f6; }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .info-box {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      min-height: 120px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .footer-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 780px) {
+      .controls, .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Core Practical: Force, Mass and Acceleration</h1>
+    <p class="intro">
+      Investigate Newton’s second law using a trolley, hanging masses and two light gates. Choose whether to keep the total mass constant and vary the force,
+      or keep the force constant and vary the total mass. Use the interrupt card and light-gate times to calculate the trolley speed at two positions and then calculate acceleration.
+    </p>
+
+    <div class="layout">
+      <section class="card">
+        <div class="controls">
+          <div class="control">
+            <label for="modeSelect">Investigation type</label>
+            <select id="modeSelect">
+              <option value="vary_force">Vary force, keep total mass constant</option>
+              <option value="vary_mass">Vary mass, keep force constant</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label for="totalMassSlider">Total mass of system: <span id="totalMassValue" class="value">0.80 kg</span></label>
+            <input id="totalMassSlider" type="range" min="0.40" max="1.60" step="0.05" value="0.80" />
+          </div>
+
+          <div class="control">
+            <label for="hangerMassSlider">Hanging mass: <span id="hangerMassValue" class="value">0.05 kg</span></label>
+            <input id="hangerMassSlider" type="range" min="0.02" max="0.20" step="0.01" value="0.05" />
+          </div>
+
+          <div class="control">
+            <label for="cardSlider">Interrupt card length: <span id="cardValue" class="value">5.0 cm</span></label>
+            <input id="cardSlider" type="range" min="2" max="10" step="0.1" value="5.0" />
+          </div>
+
+          <div class="control">
+            <label for="gateDistanceSlider">Distance between light gates: <span id="gateDistanceValue" class="value">0.80 m</span></label>
+            <input id="gateDistanceSlider" type="range" min="0.30" max="1.50" step="0.05" value="0.80" />
+          </div>
+
+          <div class="control">
+            <label for="startPointSlider">Start distance before gate 1: <span id="startPointValue" class="value">0.18 m</span></label>
+            <input id="startPointSlider" type="range" min="0.10" max="0.40" step="0.01" value="0.18" />
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="runBtn" class="warn">Run practical</button>
+          <button id="recordBtn" class="good">Record reading</button>
+          <button id="calcBtn" class="secondary">Show calculation</button>
+          <button id="methodBtn" class="secondary">Show method</button>
+          <button id="clearBtn" class="ghost">Clear results</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Gate 1 speed</div>
+            <div class="big" id="v1Reading">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Gate 2 speed</div>
+            <div class="big" id="v2Reading">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Time between gates</div>
+            <div class="big" id="tReading">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Acceleration</div>
+            <div class="big" id="aReading">—</div>
+          </div>
+        </div>
+
+        <div class="sim-area">
+          <canvas id="simCanvas" width="1040" height="680"></canvas>
+        </div>
+
+        <div class="footer-note" id="footerNote">
+          Move masses from the trolley to the hanger to vary the pulling force while keeping total mass constant.
+        </div>
+      </section>
+
+      <div class="side-grid">
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;">Results table</h2>
+          <p class="small" id="resultsIntro">Use multiple runs so the graph clearly shows the relationship being investigated.</p>
+          <table>
+            <thead>
+              <tr id="tableHeadRow">
+                <th>#</th>
+                <th>Hanging mass (kg)</th>
+                <th>Trolley mass (kg)</th>
+                <th>Total mass (kg)</th>
+                <th>Force (N)</th>
+                <th>a (m/s²)</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <tr><td colspan="6" class="small">No readings recorded yet.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;" id="graphTitle">Acceleration–force graph</h2>
+          <p class="small" id="graphIntro">Each recorded run is plotted automatically.</p>
+          <div class="sim-area" style="margin-top:12px;">
+            <canvas id="graphCanvas" width="620" height="390"></canvas>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;">Working area</h2>
+          <div class="info-box" id="workingBox">
+            Choose an investigation mode, run the trolley through both light gates, and record several readings to build the correct graph.
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const g = 9.81;
+    const frictionForce = 0.03;
+
+    const modeSelect = document.getElementById('modeSelect');
+    const totalMassSlider = document.getElementById('totalMassSlider');
+    const hangerMassSlider = document.getElementById('hangerMassSlider');
+    const cardSlider = document.getElementById('cardSlider');
+    const gateDistanceSlider = document.getElementById('gateDistanceSlider');
+    const startPointSlider = document.getElementById('startPointSlider');
+
+    const totalMassValue = document.getElementById('totalMassValue');
+    const hangerMassValue = document.getElementById('hangerMassValue');
+    const cardValue = document.getElementById('cardValue');
+    const gateDistanceValue = document.getElementById('gateDistanceValue');
+    const startPointValue = document.getElementById('startPointValue');
+
+    const runBtn = document.getElementById('runBtn');
+    const recordBtn = document.getElementById('recordBtn');
+    const calcBtn = document.getElementById('calcBtn');
+    const methodBtn = document.getElementById('methodBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    const v1Reading = document.getElementById('v1Reading');
+    const v2Reading = document.getElementById('v2Reading');
+    const tReading = document.getElementById('tReading');
+    const aReading = document.getElementById('aReading');
+
+    const footerNote = document.getElementById('footerNote');
+    const resultsIntro = document.getElementById('resultsIntro');
+    const tableHeadRow = document.getElementById('tableHeadRow');
+    const resultsBody = document.getElementById('resultsBody');
+    const graphTitle = document.getElementById('graphTitle');
+    const graphIntro = document.getElementById('graphIntro');
+    const workingBox = document.getElementById('workingBox');
+
+    const simCanvas = document.getElementById('simCanvas');
+    const sctx = simCanvas.getContext('2d');
+    const graphCanvas = document.getElementById('graphCanvas');
+    const gctx = graphCanvas.getContext('2d');
+
+    let results = [];
+    let showCalculation = false;
+    let showMethod = false;
+    let hasRun = false;
+
+    let animationFrame = null;
+    let animating = false;
+    let trolleyProgress = 0.02;
+    let beam1Broken = false;
+    let beam2Broken = false;
+    let hangerOffset = 0;
+
+    function round(value, dp) {
+      const factor = Math.pow(10, dp);
+      return Math.round(value * factor) / factor;
+    }
+
+    function getState() {
+      const mode = modeSelect.value;
+      const totalMass = parseFloat(totalMassSlider.value);
+      let hangerMass = parseFloat(hangerMassSlider.value);
+      const cardCm = parseFloat(cardSlider.value);
+      const gateDistance = parseFloat(gateDistanceSlider.value);
+      const startDistance = parseFloat(startPointSlider.value);
+
+      if (hangerMass >= totalMass - 0.05) {
+        hangerMass = totalMass - 0.05;
+      }
+      hangerMass = Math.max(0.02, hangerMass);
+      const trolleyMass = totalMass - hangerMass;
+      const pullingForce = hangerMass * g;
+      const netForce = Math.max(0.02, pullingForce - frictionForce);
+      const acceleration = netForce / totalMass;
+
+      const startSpeed = 0.10;
+      const v1 = Math.sqrt(startSpeed * startSpeed + 2 * acceleration * startDistance);
+      const v2 = Math.sqrt(v1 * v1 + 2 * acceleration * gateDistance);
+      const deltaT = (v2 - v1) / acceleration;
+      const cardLengthM = cardCm / 100;
+      const gate1Time = cardLengthM / v1;
+      const gate2Time = cardLengthM / v2;
+
+      return {
+        mode,
+        totalMass: round(totalMass, 2),
+        hangerMass: round(hangerMass, 2),
+        trolleyMass: round(trolleyMass, 2),
+        cardCm: round(cardCm, 1),
+        cardLengthM: round(cardLengthM, 3),
+        gateDistance: round(gateDistance, 2),
+        startDistance: round(startDistance, 2),
+        pullingForce: round(pullingForce, 2),
+        netForce: round(netForce, 2),
+        v1: round(v1, 2),
+        v2: round(v2, 2),
+        deltaT: round(deltaT, 2),
+        gate1Time: round(gate1Time, 3),
+        gate2Time: round(gate2Time, 3),
+        acceleration: round(acceleration, 2)
+      };
+    }
+
+    function updateModeUI() {
+      const mode = modeSelect.value;
+      if (mode === 'vary_force') {
+        footerNote.textContent = 'Move masses from the trolley to the hanger to vary the pulling force while keeping total mass constant.';
+        resultsIntro.textContent = 'Keep the total mass of the system fixed and increase the hanging mass to change the force.';
+        graphTitle.textContent = 'Acceleration–force graph';
+        graphIntro.textContent = 'Each recorded run is plotted automatically as acceleration against pulling force.';
+        tableHeadRow.innerHTML = `
+          <th>#</th>
+          <th>Hanging mass (kg)</th>
+          <th>Trolley mass (kg)</th>
+          <th>Total mass (kg)</th>
+          <th>Force (N)</th>
+          <th>a (m/s²)</th>
+        `;
+      } else {
+        footerNote.textContent = 'Keep the hanging mass constant so the pulling force stays the same, then increase the total mass of the system.';
+        resultsIntro.textContent = 'Keep the force fixed and increase the total mass to see how acceleration changes.';
+        graphTitle.textContent = 'Acceleration–mass graph';
+        graphIntro.textContent = 'Each recorded run is plotted automatically as acceleration against total mass.';
+        tableHeadRow.innerHTML = `
+          <th>#</th>
+          <th>Hanging mass (kg)</th>
+          <th>Trolley mass (kg)</th>
+          <th>Total mass (kg)</th>
+          <th>Force (N)</th>
+          <th>a (m/s²)</th>
+        `;
+      }
+      renderTable();
+      drawGraph();
+    }
+
+    function updateLabels() {
+      const state = getState();
+      totalMassValue.textContent = `${state.totalMass.toFixed(2)} kg`;
+      hangerMassValue.textContent = `${state.hangerMass.toFixed(2)} kg`;
+      cardValue.textContent = `${state.cardCm.toFixed(1)} cm`;
+      gateDistanceValue.textContent = `${state.gateDistance.toFixed(2)} m`;
+      startPointValue.textContent = `${state.startDistance.toFixed(2)} m`;
+
+      if (hasRun) {
+        v1Reading.textContent = `${state.v1.toFixed(2)} m/s`;
+        v2Reading.textContent = `${state.v2.toFixed(2)} m/s`;
+        tReading.textContent = `${state.deltaT.toFixed(2)} s`;
+        aReading.textContent = `${state.acceleration.toFixed(2)} m/s²`;
+      } else {
+        v1Reading.textContent = '—';
+        v2Reading.textContent = '—';
+        tReading.textContent = '—';
+        aReading.textContent = '—';
+      }
+
+      updateWorkingBox(state);
+      drawSimulation(state);
+      drawGraph();
+    }
+
+    function updateWorkingBox(state) {
+      const modeText = state.mode === 'vary_force'
+        ? 'Keep total mass constant and move masses from the trolley to the hanger so the pulling force changes.'
+        : 'Keep the hanging mass constant so the pulling force stays the same and increase the total mass of the system.';
+
+      if (!showCalculation && !showMethod) {
+        workingBox.innerHTML = `${modeText} Then run the trolley through both light gates and record several readings to build the graph.`;
+        return;
+      }
+
+      let html = '';
+
+      if (showMethod) {
+        html += `<strong>Method summary:</strong><br>
+        1. Set up a trolley on a track connected to a hanging mass over a pulley.<br>
+        2. Attach an interrupt card of known length to the trolley.<br>
+        3. Position two light gates a measured distance apart.<br>
+        4. Use the chosen investigation mode to vary either the force or the mass.<br>
+        5. Release the trolley from the same start point without pushing.<br>
+        6. Use the gate times to calculate speed at each gate.<br>
+        7. Calculate acceleration from the change in velocity over the time between the gates.<br>
+        8. Repeat and plot the correct graph for the investigation.`;
+      }
+
+      if (showCalculation) {
+        if (html) html += `<br><br>`;
+        if (!hasRun) {
+          html += `Run the practical first to generate readings.`;
+        } else {
+          html += `<strong>Speed at gate 1:</strong><br>
+          v₁ = card length ÷ gate 1 time<br>
+          = ${state.cardLengthM.toFixed(3)} ÷ ${state.gate1Time.toFixed(3)}<br>
+          = <strong>${state.v1.toFixed(2)} m/s</strong><br><br>
+
+          <strong>Speed at gate 2:</strong><br>
+          v₂ = card length ÷ gate 2 time<br>
+          = ${state.cardLengthM.toFixed(3)} ÷ ${state.gate2Time.toFixed(3)}<br>
+          = <strong>${state.v2.toFixed(2)} m/s</strong><br><br>
+
+          <strong>Acceleration:</strong><br>
+          a = (v₂ − v₁) ÷ Δt<br>
+          = (${state.v2.toFixed(2)} − ${state.v1.toFixed(2)}) ÷ ${state.deltaT.toFixed(2)}<br>
+          = <strong>${state.acceleration.toFixed(2)} m/s²</strong><br><br>
+
+          <strong>Pulling force:</strong><br>
+          F = hanging mass × g<br>
+          = ${state.hangerMass.toFixed(2)} × 9.81<br>
+          = <strong>${state.pullingForce.toFixed(2)} N</strong>`;
+        }
+      }
+
+      workingBox.innerHTML = html;
+    }
+
+    function drawDigitalReadout(state) {
+      sctx.save();
+      sctx.textBaseline = 'alphabetic';
+      sctx.fillStyle = '#e5e7eb';
+      sctx.strokeStyle = '#111827';
+      sctx.lineWidth = 2;
+      sctx.fillRect(54, 34, 430, 68);
+      sctx.strokeRect(54, 34, 430, 68);
+
+      const boxes = [
+        { x: 76, label: 'Gate 1 time', value: hasRun ? `${state.gate1Time.toFixed(3)} s` : '—' },
+        { x: 207, label: 'Gate 2 time', value: hasRun ? `${state.gate2Time.toFixed(3)} s` : '—' },
+        { x: 338, label: 'Δt', value: hasRun ? `${state.deltaT.toFixed(2)} s` : '—' }
+      ];
+
+      boxes.forEach(box => {
+        sctx.fillStyle = '#dbeafe';
+        sctx.fillRect(box.x, 50, 104, 32);
+        sctx.strokeStyle = '#111827';
+        sctx.strokeRect(box.x, 50, 104, 32);
+        sctx.fillStyle = '#111827';
+        sctx.font = '12px Arial';
+        sctx.textAlign = 'center';
+        sctx.fillText(box.label, box.x + 52, 45);
+        sctx.font = 'bold 16px Arial';
+        sctx.fillText(box.value, box.x + 52, 71);
+      });
+
+      sctx.restore();
+    }
+
+    function drawLightGate(x, yBase, broken, label) {
+      sctx.save();
+      sctx.strokeStyle = '#374151';
+      sctx.lineWidth = 4;
+      sctx.beginPath();
+      sctx.moveTo(x, yBase);
+      sctx.lineTo(x, yBase - 84);
+      sctx.lineTo(x + 32, yBase - 84);
+      sctx.lineTo(x + 32, yBase);
+      sctx.stroke();
+      sctx.fillStyle = broken ? '#ef4444' : '#22c55e';
+      sctx.fillRect(x + 2, yBase - 46, 28, 6);
+      sctx.fillStyle = '#111827';
+      sctx.textAlign = 'center';
+      sctx.font = '14px Arial';
+      sctx.fillText(label, x + 16, yBase + 22);
+      sctx.restore();
+    }
+
+    function drawTrackAndPulley(state) {
+      const trackY = 402;
+      const trackStart = 120;
+      const trackEnd = 800;
+      const pulleyX = 848;
+      const pulleyY = 402;
+
+      sctx.save();
+      sctx.strokeStyle = '#6b7280';
+      sctx.lineWidth = 8;
+      sctx.lineCap = 'round';
+      sctx.beginPath();
+      sctx.moveTo(trackStart, trackY);
+      sctx.lineTo(trackEnd, trackY);
+      sctx.stroke();
+
+      sctx.strokeStyle = '#9ca3af';
+      sctx.lineWidth = 2;
+      sctx.beginPath();
+      sctx.moveTo(trackStart - 20, trackY + 18);
+      sctx.lineTo(trackEnd + 72, trackY + 18);
+      sctx.stroke();
+
+      sctx.strokeStyle = '#374151';
+      sctx.lineWidth = 4;
+      sctx.beginPath();
+      sctx.arc(pulleyX, pulleyY, 18, 0, Math.PI * 2);
+      sctx.stroke();
+
+      sctx.fillStyle = '#111827';
+      sctx.font = '15px Arial';
+      sctx.textAlign = 'left';
+      sctx.fillText(`Hanging mass = ${state.hangerMass.toFixed(2)} kg`, 62, 140);
+      sctx.fillText(`Trolley mass = ${state.trolleyMass.toFixed(2)} kg`, 62, 168);
+      sctx.fillText(`Total mass = ${state.totalMass.toFixed(2)} kg`, 62, 196);
+      sctx.fillText(`Pulling force = ${state.pullingForce.toFixed(2)} N`, 62, 224);
+      sctx.restore();
+
+      return { trackY, trackStart, trackEnd, pulleyX, pulleyY };
+    }
+
+    function drawMeasureArrow(x1, x2, y, label) {
+      sctx.save();
+      sctx.strokeStyle = '#2563eb';
+      sctx.fillStyle = '#2563eb';
+      sctx.lineWidth = 2;
+      sctx.beginPath();
+      sctx.moveTo(x1, y);
+      sctx.lineTo(x2, y);
+      sctx.stroke();
+
+      function arrow(x, direction) {
+        sctx.beginPath();
+        sctx.moveTo(x, y);
+        sctx.lineTo(x - 8 * direction, y - 4);
+        sctx.lineTo(x - 8 * direction, y + 4);
+        sctx.closePath();
+        sctx.fill();
+      }
+
+      arrow(x1, -1);
+      arrow(x2, 1);
+      sctx.font = '14px Arial';
+      sctx.textAlign = 'center';
+      sctx.fillText(label, (x1 + x2) / 2, y - 10);
+      sctx.restore();
+    }
+
+    function drawTrolley(x, y, state) {
+      const trolleyLen = 100;
+      const trolleyH = 36;
+      const cardPx = state.cardCm * 3.2;
+      const massBlocks = Math.max(1, Math.round(state.trolleyMass / 0.10));
+
+      sctx.save();
+      sctx.translate(x, y);
+      sctx.fillStyle = '#94a3b8';
+      sctx.fillRect(-trolleyLen / 2, -22, trolleyLen, trolleyH);
+      sctx.strokeStyle = '#374151';
+      sctx.lineWidth = 2;
+      sctx.strokeRect(-trolleyLen / 2, -22, trolleyLen, trolleyH);
+
+      sctx.fillStyle = '#111827';
+      sctx.beginPath();
+      sctx.arc(-28, 18, 8, 0, Math.PI * 2);
+      sctx.arc(28, 18, 8, 0, Math.PI * 2);
+      sctx.fill();
+
+      sctx.fillStyle = '#60a5fa';
+      sctx.fillRect(18, -22 - cardPx, 9, cardPx);
+      sctx.strokeRect(18, -22 - cardPx, 9, cardPx);
+
+      sctx.fillStyle = '#eab308';
+      for (let i = 0; i < Math.min(massBlocks, 12); i++) {
+        const bx = -38 + (i % 4) * 18;
+        const by = -15 - Math.floor(i / 4) * 10;
+        sctx.fillRect(bx, by, 14, 8);
+        sctx.strokeRect(bx, by, 14, 8);
+      }
+
+      sctx.restore();
+    }
+
+    function drawStringAndHanger(trolleyX, system, state) {
+      const stringHeight = system.trackY - 18;
+      const stringStartX = trolleyX + 50;
+      const pulleyLeft = system.pulleyX - 18;
+      const hangerX = system.pulleyX;
+      const hangerTopY = system.pulleyY + 18 + hangerOffset;
+      const hangerBlocks = Math.max(1, Math.round(state.hangerMass / 0.01));
+
+      sctx.save();
+      sctx.strokeStyle = '#374151';
+      sctx.lineWidth = 2;
+      sctx.beginPath();
+      sctx.moveTo(stringStartX, stringHeight);
+      sctx.lineTo(pulleyLeft, stringHeight);
+      sctx.arc(system.pulleyX, system.pulleyY, 18, Math.PI, Math.PI / 2, true);
+      sctx.lineTo(hangerX, hangerTopY);
+      sctx.stroke();
+
+      sctx.fillStyle = '#b45309';
+      sctx.fillRect(hangerX - 12, hangerTopY, 24, 42);
+      sctx.strokeStyle = '#374151';
+      sctx.strokeRect(hangerX - 12, hangerTopY, 24, 42);
+
+      sctx.fillStyle = '#fbbf24';
+      for (let i = 0; i < Math.min(hangerBlocks, 8); i++) {
+        sctx.fillRect(hangerX - 10, hangerTopY + 3 + i * 4, 20, 3);
+      }
+
+      sctx.fillStyle = '#111827';
+      sctx.font = '14px Arial';
+      sctx.textAlign = 'center';
+      sctx.fillText('hanger', hangerX, hangerTopY + 58);
+      sctx.restore();
+    }
+
+    function drawSimulation(state) {
+      sctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+      sctx.fillStyle = '#fcfcfd';
+      sctx.fillRect(0, 0, simCanvas.width, simCanvas.height);
+
+      drawDigitalReadout(state);
+      const system = drawTrackAndPulley(state);
+
+      const gate1Progress = 0.34;
+      const gate2Progress = gate1Progress + Math.min(0.45, state.gateDistance / 1.9);
+      const gate1X = system.trackStart + (system.trackEnd - system.trackStart) * gate1Progress;
+      const gate2X = system.trackStart + (system.trackEnd - system.trackStart) * gate2Progress;
+
+      drawLightGate(gate1X - 16, system.trackY + 4, beam1Broken, 'Gate 1');
+      drawLightGate(gate2X - 16, system.trackY + 4, beam2Broken, 'Gate 2');
+      drawMeasureArrow(gate1X, gate2X, system.trackY + 66, `${state.gateDistance.toFixed(2)} m`);
+
+      const trolleyX = system.trackStart + (system.trackEnd - system.trackStart - 90) * trolleyProgress;
+      const trolleyY = system.trackY - 8;
+      drawTrolley(trolleyX, trolleyY, state);
+      drawStringAndHanger(trolleyX, system, state);
+
+      sctx.save();
+      sctx.fillStyle = '#6b7280';
+      sctx.font = '15px Arial';
+      sctx.textAlign = 'left';
+      sctx.fillText(`Interrupt card = ${state.cardCm.toFixed(1)} cm`, 720, 116);
+      sctx.fillText(`Start distance before gate 1 = ${state.startDistance.toFixed(2)} m`, 650, 144);
+      sctx.fillText(state.mode === 'vary_force' ? 'Masses are shifted from trolley to hanger.' : 'Hanging mass is kept constant while total mass changes.', 570, 594);
+      sctx.restore();
+    }
+
+    function drawGraph() {
+      const state = getState();
+      const w = graphCanvas.width;
+      const h = graphCanvas.height;
+      gctx.clearRect(0, 0, w, h);
+      gctx.fillStyle = '#fcfcfd';
+      gctx.fillRect(0, 0, w, h);
+
+      const left = 66;
+      const right = 24;
+      const top = 26;
+      const bottom = 52;
+      const plotW = w - left - right;
+      const plotH = h - top - bottom;
+
+      const xValues = results.map(r => state.mode === 'vary_force' ? r.pullingForce : r.totalMass);
+      const maxX = Math.max(0.5, ...xValues, state.mode === 'vary_force' ? getState().pullingForce : getState().totalMass) * 1.15;
+      const maxY = Math.max(0.5, ...results.map(r => r.acceleration), getState().acceleration) * 1.15;
+
+      gctx.save();
+      gctx.strokeStyle = '#e5e7eb';
+      gctx.lineWidth = 1;
+      for (let i = 0; i <= 5; i++) {
+        const y = top + (plotH / 5) * i;
+        gctx.beginPath();
+        gctx.moveTo(left, y);
+        gctx.lineTo(left + plotW, y);
+        gctx.stroke();
+      }
+      for (let i = 0; i <= 5; i++) {
+        const x = left + (plotW / 5) * i;
+        gctx.beginPath();
+        gctx.moveTo(x, top);
+        gctx.lineTo(x, top + plotH);
+        gctx.stroke();
+      }
+
+      gctx.strokeStyle = '#111827';
+      gctx.lineWidth = 2;
+      gctx.beginPath();
+      gctx.moveTo(left, top);
+      gctx.lineTo(left, top + plotH);
+      gctx.lineTo(left + plotW, top + plotH);
+      gctx.stroke();
+
+      gctx.fillStyle = '#111827';
+      gctx.font = '12px Arial';
+      gctx.textAlign = 'center';
+      for (let i = 0; i <= 5; i++) {
+        const x = left + (plotW / 5) * i;
+        const value = (maxX / 5) * i;
+        gctx.fillText(value.toFixed(2), x, top + plotH + 18);
+      }
+
+      gctx.textAlign = 'right';
+      for (let i = 0; i <= 5; i++) {
+        const y = top + plotH - (plotH / 5) * i;
+        const value = (maxY / 5) * i;
+        gctx.fillText(value.toFixed(2), left - 8, y + 4);
+      }
+
+      gctx.font = 'bold 15px Arial';
+      gctx.textAlign = 'center';
+      gctx.fillText(state.mode === 'vary_force' ? 'Acceleration against force' : 'Acceleration against total mass', left + plotW / 2, 16);
+      gctx.font = '13px Arial';
+      gctx.fillText(state.mode === 'vary_force' ? 'Force (N)' : 'Total mass (kg)', left + plotW / 2, h - 14);
+
+      gctx.save();
+      gctx.translate(20, top + plotH / 2);
+      gctx.rotate(-Math.PI / 2);
+      gctx.fillText('Acceleration (m/s²)', 0, 0);
+      gctx.restore();
+
+      const toX = xVal => left + (xVal / maxX) * plotW;
+      const toY = yVal => top + plotH - (yVal / maxY) * plotH;
+
+      if (results.length) {
+        const sorted = [...results].sort((a, b) => {
+          const ax = state.mode === 'vary_force' ? a.pullingForce : a.totalMass;
+          const bx = state.mode === 'vary_force' ? b.pullingForce : b.totalMass;
+          return ax - bx;
+        });
+
+        gctx.strokeStyle = '#0f766e';
+        gctx.lineWidth = 2.5;
+        gctx.beginPath();
+        sorted.forEach((r, i) => {
+          const xv = state.mode === 'vary_force' ? r.pullingForce : r.totalMass;
+          const x = toX(xv);
+          const y = toY(r.acceleration);
+          if (i === 0) gctx.moveTo(x, y);
+          else gctx.lineTo(x, y);
+        });
+        gctx.stroke();
+
+        sorted.forEach((r, i) => {
+          const xv = state.mode === 'vary_force' ? r.pullingForce : r.totalMass;
+          const x = toX(xv);
+          const y = toY(r.acceleration);
+          gctx.fillStyle = '#2563eb';
+          gctx.beginPath();
+          gctx.arc(x, y, 4.5, 0, Math.PI * 2);
+          gctx.fill();
+          gctx.fillStyle = '#111827';
+          gctx.font = '11px Arial';
+          gctx.textAlign = 'left';
+          gctx.fillText(`${i + 1}`, x + 6, y - 4);
+        });
+      } else {
+        gctx.fillStyle = '#6b7280';
+        gctx.font = '14px Arial';
+        gctx.textAlign = 'center';
+        gctx.fillText('Recorded readings will be plotted here automatically.', left + plotW / 2, top + plotH / 2);
+      }
+
+      gctx.restore();
+    }
+
+    function renderTable() {
+      if (!results.length) {
+        resultsBody.innerHTML = '<tr><td colspan="6" class="small">No readings recorded yet.</td></tr>';
+        return;
+      }
+
+      resultsBody.innerHTML = results.map((r, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${r.hangerMass.toFixed(2)}</td>
+          <td>${r.trolleyMass.toFixed(2)}</td>
+          <td>${r.totalMass.toFixed(2)}</td>
+          <td>${r.pullingForce.toFixed(2)}</td>
+          <td>${r.acceleration.toFixed(2)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function cancelAnimationIfNeeded() {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = null;
+      }
+      animating = false;
+    }
+
+    function startRun() {
+      cancelAnimationIfNeeded();
+      hasRun = false;
+      animating = true;
+      trolleyProgress = 0.02;
+      beam1Broken = false;
+      beam2Broken = false;
+      hangerOffset = 0;
+
+      const state = getState();
+      const duration = Math.max(2400, 5200 - state.acceleration * 1300);
+      let startTime = null;
+
+      function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const p = Math.min(elapsed / duration, 1);
+        trolleyProgress = 0.02 + 0.86 * (p * p);
+        hangerOffset = 74 * trolleyProgress;
+
+        const gate1Progress = 0.34;
+        const gate2Progress = gate1Progress + Math.min(0.45, state.gateDistance / 1.9);
+        beam1Broken = trolleyProgress > gate1Progress - 0.025 && trolleyProgress < gate1Progress + 0.045;
+        beam2Broken = trolleyProgress > gate2Progress - 0.025 && trolleyProgress < gate2Progress + 0.045;
+
+        drawSimulation(state);
+
+        if (p < 1) {
+          animationFrame = requestAnimationFrame(step);
+        } else {
+          animating = false;
+          hasRun = true;
+          beam1Broken = false;
+          beam2Broken = false;
+          updateLabels();
+          animationFrame = null;
+        }
+      }
+
+      animationFrame = requestAnimationFrame(step);
+    }
+
+    function handleInputChange() {
+      if (!animating) {
+        hasRun = false;
+        trolleyProgress = 0.02;
+        beam1Broken = false;
+        beam2Broken = false;
+        hangerOffset = 0;
+      }
+      updateLabels();
+    }
+
+    [totalMassSlider, hangerMassSlider, cardSlider, gateDistanceSlider, startPointSlider].forEach(el => {
+      el.addEventListener('input', handleInputChange);
+    });
+
+    modeSelect.addEventListener('change', () => {
+      results = [];
+      hasRun = false;
+      trolleyProgress = 0.02;
+      beam1Broken = false;
+      beam2Broken = false;
+      hangerOffset = 0;
+      updateModeUI();
+      updateLabels();
+    });
+
+    runBtn.addEventListener('click', startRun);
+
+    recordBtn.addEventListener('click', () => {
+      if (!hasRun) {
+        workingBox.innerHTML = 'Run the practical first so the light gates can record the times.';
+        return;
+      }
+      results.push({ ...getState() });
+      renderTable();
+      drawGraph();
+    });
+
+    calcBtn.addEventListener('click', () => {
+      showCalculation = !showCalculation;
+      calcBtn.textContent = showCalculation ? 'Hide calculation' : 'Show calculation';
+      updateLabels();
+    });
+
+    methodBtn.addEventListener('click', () => {
+      showMethod = !showMethod;
+      methodBtn.textContent = showMethod ? 'Hide method' : 'Show method';
+      updateLabels();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      results = [];
+      hasRun = false;
+      cancelAnimationIfNeeded();
+      trolleyProgress = 0.02;
+      beam1Broken = false;
+      beam2Broken = false;
+      hangerOffset = 0;
+      renderTable();
+      updateLabels();
+    });
+
+    updateModeUI();
+    renderTable();
+    updateLabels();
+  </script>
+</body>
+</html>
