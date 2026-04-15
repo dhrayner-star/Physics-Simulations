@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceleration Using Light Gates Simulation</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #2563eb;
+      --accent2: #0f766e;
+      --warn: #b45309;
+      --good: #15803d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .wrap {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.95rem;
+    }
+
+    .intro {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.42fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .control {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .control label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .value {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: white;
+      font-size: 0.95rem;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+
+    button.secondary { background: var(--accent2); }
+    button.warn { background: var(--warn); }
+    button.good { background: var(--good); }
+    button.ghost {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .stat .label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat .big {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .sim-area {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .side-grid {
+      display: grid;
+      grid-template-rows: auto auto auto;
+      gap: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      text-align: center;
+    }
+
+    th { background: #f3f4f6; }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .info-box {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      min-height: 92px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .footer-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 1080px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 780px) {
+      .controls, .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Acceleration Using Light Gates</h1>
+    <p class="intro">
+      Investigate acceleration using a trolley, interrupt card and two light gates. Measure the time taken for the trolley to pass each light gate,
+      calculate the speed at each gate using speed = card length ÷ time, then calculate acceleration using acceleration = change in velocity ÷ time.
+    </p>
+
+    <div class="layout">
+      <section class="card">
+        <div class="controls">
+          <div class="control">
+            <label for="rampSlider">Ramp height: <span id="rampValue" class="value">12.0 cm</span></label>
+            <input id="rampSlider" type="range" min="4" max="24" step="0.5" value="12" />
+          </div>
+
+          <div class="control">
+            <label for="cardSlider">Interrupt card length: <span id="cardValue" class="value">5.0 cm</span></label>
+            <input id="cardSlider" type="range" min="2" max="10" step="0.1" value="5.0" />
+          </div>
+
+          <div class="control">
+            <label for="gateDistanceSlider">Distance between gates: <span id="gateDistanceValue" class="value">0.80 m</span></label>
+            <input id="gateDistanceSlider" type="range" min="0.30" max="1.50" step="0.05" value="0.80" />
+          </div>
+
+          <div class="control">
+            <label for="massSlider">Trolley mass: <span id="massValue" class="value">0.60 kg</span></label>
+            <input id="massSlider" type="range" min="0.20" max="1.20" step="0.05" value="0.60" />
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="runBtn" class="warn">Run practical</button>
+          <button id="recordBtn" class="good">Record reading</button>
+          <button id="calcBtn" class="secondary">Show calculation</button>
+          <button id="methodBtn" class="secondary">Show method</button>
+          <button id="clearBtn" class="ghost">Clear results</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Gate 1 speed</div>
+            <div class="big" id="v1Reading">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Gate 2 speed</div>
+            <div class="big" id="v2Reading">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Time between gates</div>
+            <div class="big" id="tReading">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Acceleration</div>
+            <div class="big" id="aReading">—</div>
+          </div>
+        </div>
+
+        <div class="sim-area">
+          <canvas id="simCanvas" width="980" height="620"></canvas>
+        </div>
+
+        <div class="footer-note">
+          Use the card length and light-gate times to calculate instantaneous speed at each gate. Then calculate acceleration between the two gates.
+        </div>
+      </section>
+
+      <div class="side-grid">
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;">Results table</h2>
+          <p class="small">Record readings for different ramp heights or gate separations to compare the trolley's acceleration.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Ramp (cm)</th>
+                <th>Card (m)</th>
+                <th>v₁ (m/s)</th>
+                <th>v₂ (m/s)</th>
+                <th>Δt (s)</th>
+                <th>a (m/s²)</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <tr><td colspan="7" class="small">No readings recorded yet.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;">Velocity–time graph</h2>
+          <p class="small">Each recorded run plots Gate 1 speed at t = 0 s and Gate 2 speed at t = Δt.</p>
+          <div class="sim-area" style="margin-top:12px;">
+            <canvas id="graphCanvas" width="560" height="360"></canvas>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;">Working area</h2>
+          <div class="info-box" id="workingBox">
+            Press <strong>Run practical</strong> to release the trolley. Then use the readings to calculate speed at each gate and the acceleration between the gates.
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const rampSlider = document.getElementById('rampSlider');
+    const cardSlider = document.getElementById('cardSlider');
+    const gateDistanceSlider = document.getElementById('gateDistanceSlider');
+    const massSlider = document.getElementById('massSlider');
+
+    const rampValue = document.getElementById('rampValue');
+    const cardValue = document.getElementById('cardValue');
+    const gateDistanceValue = document.getElementById('gateDistanceValue');
+    const massValue = document.getElementById('massValue');
+
+    const runBtn = document.getElementById('runBtn');
+    const recordBtn = document.getElementById('recordBtn');
+    const calcBtn = document.getElementById('calcBtn');
+    const methodBtn = document.getElementById('methodBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    const v1Reading = document.getElementById('v1Reading');
+    const v2Reading = document.getElementById('v2Reading');
+    const tReading = document.getElementById('tReading');
+    const aReading = document.getElementById('aReading');
+    const resultsBody = document.getElementById('resultsBody');
+    const workingBox = document.getElementById('workingBox');
+
+    const simCanvas = document.getElementById('simCanvas');
+    const simCtx = simCanvas.getContext('2d');
+
+    const graphCanvas = document.getElementById('graphCanvas');
+    const graphCtx = graphCanvas.getContext('2d');
+
+    let results = [];
+    let showCalculation = false;
+    let showMethod = false;
+    let hasRun = false;
+
+    let animationFrame = null;
+    let animating = false;
+    let trolleyProgress = 0.03;
+    let beam1Broken = false;
+    let beam2Broken = false;
+
+    function round(value, dp) {
+      const factor = Math.pow(10, dp);
+      return Math.round(value * factor) / factor;
+    }
+
+    function getState() {
+      const rampCm = parseFloat(rampSlider.value);
+      const cardCm = parseFloat(cardSlider.value);
+      const gateDistanceM = parseFloat(gateDistanceSlider.value);
+      const massKg = parseFloat(massSlider.value);
+
+      const effectiveA = 0.55 + rampCm * 0.19;
+      const startV = 0.18;
+      const distanceBeforeGate1 = 0.18;
+      const v1 = Math.sqrt(startV * startV + 2 * effectiveA * distanceBeforeGate1);
+      const v2 = Math.sqrt(v1 * v1 + 2 * effectiveA * gateDistanceM);
+      const deltaT = (v2 - v1) / effectiveA;
+
+      const cardLengthM = cardCm / 100;
+      const gate1BlockTime = cardLengthM / v1;
+      const gate2BlockTime = cardLengthM / v2;
+
+      return {
+        rampCm: round(rampCm, 1),
+        cardCm: round(cardCm, 1),
+        cardLengthM: round(cardLengthM, 3),
+        gateDistanceM: round(gateDistanceM, 2),
+        massKg: round(massKg, 2),
+        v1: round(v1, 2),
+        v2: round(v2, 2),
+        deltaT: round(deltaT, 2),
+        gate1BlockTime: round(gate1BlockTime, 3),
+        gate2BlockTime: round(gate2BlockTime, 3),
+        acceleration: round((v2 - v1) / deltaT, 2)
+      };
+    }
+
+    function updateLabels() {
+      const state = getState();
+
+      rampValue.textContent = `${state.rampCm.toFixed(1)} cm`;
+      cardValue.textContent = `${state.cardCm.toFixed(1)} cm`;
+      gateDistanceValue.textContent = `${state.gateDistanceM.toFixed(2)} m`;
+      massValue.textContent = `${state.massKg.toFixed(2)} kg`;
+
+      if (hasRun) {
+        v1Reading.textContent = `${state.v1.toFixed(2)} m/s`;
+        v2Reading.textContent = `${state.v2.toFixed(2)} m/s`;
+        tReading.textContent = `${state.deltaT.toFixed(2)} s`;
+        aReading.textContent = `${state.acceleration.toFixed(2)} m/s²`;
+      } else {
+        v1Reading.textContent = '—';
+        v2Reading.textContent = '—';
+        tReading.textContent = '—';
+        aReading.textContent = '—';
+      }
+
+      updateWorkingBox(state);
+      drawSimulation(state);
+      drawGraph();
+    }
+
+    function updateWorkingBox(state) {
+      if (!showCalculation && !showMethod) {
+        workingBox.innerHTML = `Press <strong>Run practical</strong> to release the trolley. Then use the readings to calculate speed at each gate and the acceleration between the gates.`;
+        return;
+      }
+
+      let html = '';
+
+      if (showMethod) {
+        html += `<strong>Method summary:</strong><br>
+        1. Measure the interrupt card length on the trolley.<br>
+        2. Set the distance between the two light gates.<br>
+        3. Release the trolley from the same point on the ramp.<br>
+        4. Record the time for the card to pass each gate.<br>
+        5. Calculate speed at each gate using <strong>speed = card length ÷ time</strong>.<br>
+        6. Calculate acceleration using <strong>a = (v₂ − v₁) ÷ Δt</strong>.<br>
+        7. Record several runs and compare the velocity–time lines.`;
+      }
+
+      if (showCalculation) {
+        if (html) html += `<br><br>`;
+
+        if (!hasRun) {
+          html += `Run the practical first to generate readings.`;
+        } else {
+          html += `<strong>Speed at light gate 1:</strong><br>
+          v₁ = card length ÷ time at gate 1<br>
+          = ${state.cardLengthM.toFixed(3)} ÷ ${state.gate1BlockTime.toFixed(3)}<br>
+          = <strong>${state.v1.toFixed(2)} m/s</strong><br><br>
+
+          <strong>Speed at light gate 2:</strong><br>
+          v₂ = card length ÷ time at gate 2<br>
+          = ${state.cardLengthM.toFixed(3)} ÷ ${state.gate2BlockTime.toFixed(3)}<br>
+          = <strong>${state.v2.toFixed(2)} m/s</strong><br><br>
+
+          <strong>Acceleration:</strong><br>
+          a = (v₂ − v₁) ÷ Δt<br>
+          = (${state.v2.toFixed(2)} − ${state.v1.toFixed(2)}) ÷ ${state.deltaT.toFixed(2)}<br>
+          = <strong>${state.acceleration.toFixed(2)} m/s²</strong>`;
+        }
+      }
+
+      workingBox.innerHTML = html;
+    }
+
+    function drawLightGate(ctx, x, yBase, beamBroken, label) {
+      ctx.save();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#374151';
+      ctx.beginPath();
+      ctx.moveTo(x, yBase);
+      ctx.lineTo(x, yBase - 90);
+      ctx.lineTo(x + 34, yBase - 90);
+      ctx.lineTo(x + 34, yBase);
+      ctx.stroke();
+
+      ctx.fillStyle = beamBroken ? '#ef4444' : '#22c55e';
+      ctx.fillRect(x + 2, yBase - 54, 30, 6);
+
+      ctx.fillStyle = '#111827';
+      ctx.font = '15px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, x + 17, yBase + 24);
+      ctx.restore();
+    }
+
+    function drawTrack(state) {
+      const startX = 120;
+      const startY = 205;
+      const endX = 860;
+      const endY = 425;
+
+      simCtx.save();
+      simCtx.strokeStyle = '#6b7280';
+      simCtx.lineWidth = 10;
+      simCtx.lineCap = 'round';
+      simCtx.beginPath();
+      simCtx.moveTo(startX, startY);
+      simCtx.lineTo(endX, endY);
+      simCtx.stroke();
+
+      simCtx.strokeStyle = '#9ca3af';
+      simCtx.lineWidth = 2;
+      simCtx.beginPath();
+      simCtx.moveTo(startX - 40, endY + 16);
+      simCtx.lineTo(endX + 20, endY + 16);
+      simCtx.stroke();
+
+      simCtx.fillStyle = '#111827';
+      simCtx.font = '15px Arial';
+      simCtx.textAlign = 'left';
+      simCtx.fillText(`Ramp height = ${state.rampCm.toFixed(1)} cm`, 70, 150);
+      simCtx.fillText(`Gate separation = ${state.gateDistanceM.toFixed(2)} m`, 650, 520);
+      simCtx.restore();
+
+      return { startX, startY, endX, endY };
+    }
+
+    function drawMeasureArrow(x1, y1, x2, y2, label) {
+      simCtx.save();
+      simCtx.strokeStyle = '#2563eb';
+      simCtx.fillStyle = '#2563eb';
+      simCtx.lineWidth = 2;
+      simCtx.beginPath();
+      simCtx.moveTo(x1, y1);
+      simCtx.lineTo(x2, y2);
+      simCtx.stroke();
+
+      function arrowHead(x, y, angle) {
+        const size = 8;
+        simCtx.beginPath();
+        simCtx.moveTo(x, y);
+        simCtx.lineTo(x - size * Math.cos(angle - Math.PI / 6), y - size * Math.sin(angle - Math.PI / 6));
+        simCtx.lineTo(x - size * Math.cos(angle + Math.PI / 6), y - size * Math.sin(angle + Math.PI / 6));
+        simCtx.closePath();
+        simCtx.fill();
+      }
+
+      const a1 = Math.atan2(y2 - y1, x2 - x1);
+      arrowHead(x2, y2, a1);
+      arrowHead(x1, y1, a1 + Math.PI);
+
+      simCtx.font = '14px Arial';
+      simCtx.textAlign = 'center';
+      simCtx.fillText(label, (x1 + x2) / 2, y1 - 10);
+      simCtx.restore();
+    }
+
+    function drawTrolley(x, y, angle, state) {
+      const trolleyLength = 64;
+      const trolleyHeight = 28;
+      const cardPx = state.cardCm * 3.2;
+
+      simCtx.save();
+      simCtx.translate(x, y);
+      simCtx.rotate(angle);
+
+      simCtx.fillStyle = '#94a3b8';
+      simCtx.fillRect(-32, -18, trolleyLength, trolleyHeight);
+      simCtx.strokeStyle = '#374151';
+      simCtx.lineWidth = 2;
+      simCtx.strokeRect(-32, -18, trolleyLength, trolleyHeight);
+
+      simCtx.fillStyle = '#111827';
+      simCtx.beginPath();
+      simCtx.arc(-18, 14, 7, 0, Math.PI * 2);
+      simCtx.arc(18, 14, 7, 0, Math.PI * 2);
+      simCtx.fill();
+
+      simCtx.fillStyle = '#60a5fa';
+      simCtx.fillRect(12, -18 - cardPx, 8, cardPx);
+      simCtx.strokeRect(12, -18 - cardPx, 8, cardPx);
+
+      simCtx.restore();
+    }
+
+    function drawTimers(state) {
+      simCtx.save();
+      simCtx.fillStyle = '#e5e7eb';
+      simCtx.strokeStyle = '#111827';
+      simCtx.lineWidth = 2;
+      simCtx.fillRect(70, 40, 360, 62);
+      simCtx.strokeRect(70, 40, 360, 62);
+
+      simCtx.fillStyle = '#dbeafe';
+      simCtx.fillRect(90, 54, 95, 30);
+      simCtx.fillRect(202, 54, 95, 30);
+      simCtx.fillRect(314, 54, 95, 30);
+      simCtx.strokeRect(90, 54, 95, 30);
+      simCtx.strokeRect(202, 54, 95, 30);
+      simCtx.strokeRect(314, 54, 95, 30);
+
+      simCtx.fillStyle = '#111827';
+      simCtx.font = '12px Arial';
+      simCtx.textAlign = 'center';
+      simCtx.fillText('Gate 1 time', 137, 49);
+      simCtx.fillText('Gate 2 time', 249, 49);
+      simCtx.fillText('Δt', 361, 49);
+
+      simCtx.font = 'bold 16px Arial';
+      simCtx.fillText(hasRun ? `${state.gate1BlockTime.toFixed(3)} s` : '—', 137, 74);
+      simCtx.fillText(hasRun ? `${state.gate2BlockTime.toFixed(3)} s` : '—', 249, 74);
+      simCtx.fillText(hasRun ? `${state.deltaT.toFixed(2)} s` : '—', 361, 74);
+      simCtx.restore();
+    }
+
+    function drawSimulation(state) {
+      simCtx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+      simCtx.fillStyle = '#fcfcfd';
+      simCtx.fillRect(0, 0, simCanvas.width, simCanvas.height);
+
+      drawTimers(state);
+
+      const track = drawTrack(state);
+      const angle = Math.atan2(track.endY - track.startY, track.endX - track.startX);
+
+      const gate1Progress = 0.42;
+      const gate2Progress = gate1Progress + Math.min(0.42, state.gateDistanceM / 2.2);
+
+      const gate1X = track.startX + (track.endX - track.startX) * gate1Progress;
+      const gate1Y = track.startY + (track.endY - track.startY) * gate1Progress + 6;
+
+      const gate2X = track.startX + (track.endX - track.startX) * gate2Progress;
+      const gate2Y = track.startY + (track.endY - track.startY) * gate2Progress + 6;
+
+      drawLightGate(simCtx, gate1X - 17, gate1Y, beam1Broken, 'Gate 1');
+      drawLightGate(simCtx, gate2X - 17, gate2Y, beam2Broken, 'Gate 2');
+
+      drawMeasureArrow(gate1X, gate1Y + 55, gate2X, gate2Y + 55, `${state.gateDistanceM.toFixed(2)} m`);
+
+      const trolleyX = track.startX + (track.endX - track.startX) * trolleyProgress;
+      const trolleyY = track.startY + (track.endY - track.startY) * trolleyProgress;
+      drawTrolley(trolleyX, trolleyY - 8, angle, state);
+
+      simCtx.save();
+      simCtx.fillStyle = '#6b7280';
+      simCtx.font = '15px Arial';
+      simCtx.textAlign = 'left';
+      simCtx.fillText(`Card length = ${state.cardCm.toFixed(1)} cm`, 690, 110);
+      simCtx.fillText(`Trolley mass = ${state.massKg.toFixed(2)} kg`, 690, 138);
+      simCtx.fillText('Instantaneous speed is found from the time the card blocks each light gate.', 540, 566);
+      simCtx.restore();
+    }
+
+    function drawGraph() {
+      const ctx = graphCtx;
+      const w = graphCanvas.width;
+      const h = graphCanvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#fcfcfd';
+      ctx.fillRect(0, 0, w, h);
+
+      const left = 58;
+      const right = 24;
+      const top = 24;
+      const bottom = 46;
+      const plotW = w - left - right;
+      const plotH = h - top - bottom;
+
+      const maxTime = Math.max(1, ...results.map(r => r.deltaT)) * 1.15;
+      const maxVel = Math.max(1, ...results.flatMap(r => [r.v1, r.v2])) * 1.15;
+
+      ctx.save();
+
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 5; i++) {
+        const y = top + (plotH / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(left + plotW, y);
+        ctx.stroke();
+      }
+
+      for (let i = 0; i <= 5; i++) {
+        const x = left + (plotW / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(x, top);
+        ctx.lineTo(x, top + plotH);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#111827';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(left, top);
+      ctx.lineTo(left, top + plotH);
+      ctx.lineTo(left + plotW, top + plotH);
+      ctx.stroke();
+
+      ctx.fillStyle = '#111827';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+
+      for (let i = 0; i <= 5; i++) {
+        const x = left + (plotW / 5) * i;
+        const value = (maxTime / 5) * i;
+        ctx.fillText(value.toFixed(2), x, top + plotH + 18);
+      }
+
+      ctx.textAlign = 'right';
+      for (let i = 0; i <= 5; i++) {
+        const y = top + plotH - (plotH / 5) * i;
+        const value = (maxVel / 5) * i;
+        ctx.fillText(value.toFixed(2), left - 8, y + 4);
+      }
+
+      ctx.save();
+      ctx.translate(18, top + plotH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'center';
+      ctx.font = '13px Arial';
+      ctx.fillText('Velocity (m/s)', 0, 0);
+      ctx.restore();
+
+      ctx.textAlign = 'center';
+      ctx.font = '13px Arial';
+      ctx.fillText('Time (s)', left + plotW / 2, h - 12);
+
+      ctx.font = 'bold 15px Arial';
+      ctx.fillText('Velocity–time graph', left + plotW / 2, 16);
+
+      const toX = t => left + (t / maxTime) * plotW;
+      const toY = v => top + plotH - (v / maxVel) * plotH;
+
+      const colours = ['#2563eb', '#0f766e', '#b45309', '#7c3aed', '#dc2626', '#0891b2'];
+
+      results.forEach((r, i) => {
+        const colour = colours[i % colours.length];
+        const x1 = toX(0);
+        const y1 = toY(r.v1);
+        const x2 = toX(r.deltaT);
+        const y2 = toY(r.v2);
+
+        ctx.strokeStyle = colour;
+        ctx.fillStyle = colour;
+        ctx.lineWidth = 2.5;
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(x1, y1, 4, 0, Math.PI * 2);
+        ctx.arc(x2, y2, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Run ${i + 1}`, x2 + 6, y2 - 4);
+      });
+
+      if (!results.length) {
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Graph will appear here as readings are recorded.', left + plotW / 2, top + plotH / 2);
+      }
+
+      ctx.restore();
+    }
+
+    function renderTable() {
+      if (!results.length) {
+        resultsBody.innerHTML = '<tr><td colspan="7" class="small">No readings recorded yet.</td></tr>';
+        return;
+      }
+
+      resultsBody.innerHTML = results.map((r, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${r.rampCm.toFixed(1)}</td>
+          <td>${r.cardLengthM.toFixed(3)}</td>
+          <td>${r.v1.toFixed(2)}</td>
+          <td>${r.v2.toFixed(2)}</td>
+          <td>${r.deltaT.toFixed(2)}</td>
+          <td>${r.acceleration.toFixed(2)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function cancelAnimationIfNeeded() {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = null;
+      }
+      animating = false;
+    }
+
+    function startRun() {
+      cancelAnimationIfNeeded();
+      hasRun = false;
+      animating = true;
+      trolleyProgress = 0.03;
+      beam1Broken = false;
+      beam2Broken = false;
+
+      const state = getState();
+      const duration = Math.max(2500, 4200 - state.rampCm * 70);
+      let startTime = null;
+
+      function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const p = Math.min(elapsed / duration, 1);
+        trolleyProgress = 0.03 + 0.86 * (p * p);
+
+        const gate1Progress = 0.42;
+        const gate2Progress = gate1Progress + Math.min(0.42, state.gateDistanceM / 2.2);
+
+        beam1Broken = trolleyProgress > gate1Progress - 0.02 && trolleyProgress < gate1Progress + 0.04;
+        beam2Broken = trolleyProgress > gate2Progress - 0.02 && trolleyProgress < gate2Progress + 0.04;
+
+        drawSimulation(state);
+
+        if (p < 1) {
+          animationFrame = requestAnimationFrame(step);
+        } else {
+          animating = false;
+          hasRun = true;
+          beam1Broken = false;
+          beam2Broken = false;
+          updateLabels();
+          animationFrame = null;
+        }
+      }
+
+      animationFrame = requestAnimationFrame(step);
+    }
+
+    [rampSlider, cardSlider, gateDistanceSlider, massSlider].forEach(el => {
+      el.addEventListener('input', () => {
+        if (!animating) {
+          hasRun = false;
+          beam1Broken = false;
+          beam2Broken = false;
+          trolleyProgress = 0.03;
+        }
+        updateLabels();
+      });
+    });
+
+    runBtn.addEventListener('click', startRun);
+
+    recordBtn.addEventListener('click', () => {
+      if (!hasRun) {
+        workingBox.innerHTML = 'Run the practical first so the light gates can record the times.';
+        return;
+      }
+      results.push({ ...getState() });
+      renderTable();
+      drawGraph();
+    });
+
+    calcBtn.addEventListener('click', () => {
+      showCalculation = !showCalculation;
+      calcBtn.textContent = showCalculation ? 'Hide calculation' : 'Show calculation';
+      updateLabels();
+    });
+
+    methodBtn.addEventListener('click', () => {
+      showMethod = !showMethod;
+      methodBtn.textContent = showMethod ? 'Hide method' : 'Show method';
+      updateLabels();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      results = [];
+      hasRun = false;
+      cancelAnimationIfNeeded();
+      beam1Broken = false;
+      beam2Broken = false;
+      trolleyProgress = 0.03;
+      renderTable();
+      updateLabels();
+    });
+
+    renderTable();
+    updateLabels();
+  </script>
+</body>
+</html>
