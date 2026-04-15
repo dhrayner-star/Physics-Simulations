@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Density of Regular and Irregular Solids Simulation</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #2563eb;
+      --accent2: #0f766e;
+      --warn: #b45309;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .wrap {
+      max-width: 1450px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.95rem;
+    }
+
+    .intro {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.38fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .control {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .control label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .value {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: white;
+      font-size: 0.95rem;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+
+    button.secondary { background: var(--accent2); }
+    button.ghost {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    button.warn { background: var(--warn); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .stat .label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat .big {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .sim-area {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .side-grid {
+      display: grid;
+      grid-template-rows: auto auto;
+      gap: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      text-align: center;
+    }
+
+    th { background: #f3f4f6; }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .info-box {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      min-height: 72px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .footer-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 1080px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 780px) {
+      .controls, .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Density of Regular and Irregular Solids</h1>
+    <p class="intro">
+      Investigate density by measuring mass and volume. For regular solids, use dimensions to calculate volume.
+      For irregular solids, use a displacement can and measuring cylinder to find the volume of displaced water.
+      Choose a material and see how mass changes with volume.
+    </p>
+
+    <div class="layout">
+      <section class="card">
+        <div class="controls">
+          <div class="control">
+            <label for="modeSelect">Investigation type</label>
+            <select id="modeSelect">
+              <option value="regular">Regular solid</option>
+              <option value="irregular">Irregular solid</option>
+            </select>
+          </div>
+
+          <div class="control" id="shapeControl">
+            <label for="shapeSelect">Shape</label>
+            <select id="shapeSelect">
+              <option value="cube">Cube</option>
+              <option value="cuboid">Cuboid</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label for="materialSelect">Material</label>
+            <select id="materialSelect">
+              <option value="wood">Wood</option>
+              <option value="plastic">Plastic</option>
+              <option value="aluminium">Aluminium</option>
+              <option value="iron">Iron</option>
+              <option value="copper">Copper</option>
+            </select>
+          </div>
+
+          <div class="control" id="dim1Control">
+            <label for="dim1Slider" id="dim1Label">Side length: <span id="dim1Value" class="value">4.0 cm</span></label>
+            <input id="dim1Slider" type="range" min="1" max="10" step="0.1" value="4.0" />
+          </div>
+
+          <div class="control" id="dim2Control">
+            <label for="dim2Slider" id="dim2Label">Width: <span id="dim2Value" class="value">3.0 cm</span></label>
+            <input id="dim2Slider" type="range" min="1" max="10" step="0.1" value="3.0" />
+          </div>
+
+          <div class="control" id="dim3Control">
+            <label for="dim3Slider" id="dim3Label">Height: <span id="dim3Value" class="value">2.0 cm</span></label>
+            <input id="dim3Slider" type="range" min="1" max="10" step="0.1" value="2.0" />
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="recordBtn">Record reading</button>
+          <button id="calcBtn" class="secondary">Show calculation</button>
+          <button id="convertBtn" class="secondary">Show conversion</button>
+          <button id="dropBtn" class="warn" style="display:none;">Lower object into can</button>
+          <button id="resetWaterBtn" class="ghost" style="display:none;">Reset can</button>
+          <button id="clearBtn" class="ghost">Clear results</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Material</div>
+            <div class="big" id="materialReading">Wood</div>
+          </div>
+          <div class="stat">
+            <div class="label">Mass</div>
+            <div class="big" id="massReading">51.2 g</div>
+          </div>
+          <div class="stat">
+            <div class="label" id="volumeLabel">Volume</div>
+            <div class="big" id="volumeReading">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Density</div>
+            <div class="big" id="densityReading">—</div>
+          </div>
+        </div>
+
+        <div class="sim-area">
+          <canvas id="simCanvas" width="900" height="620"></canvas>
+        </div>
+
+        <div class="footer-note">
+          Use the balance to measure mass. For regular solids, use dimensions to calculate volume. For irregular solids, use the volume of water collected in the measuring cylinder.
+        </div>
+      </section>
+
+      <div class="side-grid">
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;">Results table</h2>
+          <p class="small" id="tableIntro">
+            Record the material, mass and dimensions, then calculate volume and density.
+          </p>
+          <table>
+            <thead>
+              <tr id="tableHeadRow">
+                <th>#</th>
+                <th>Material</th>
+                <th>Shape</th>
+                <th>Mass (g)</th>
+                <th>Volume (cm³)</th>
+                <th>Density (g/cm³)</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <tr><td colspan="6" class="small">No readings recorded yet.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;">Working area</h2>
+          <div class="info-box" id="workingBox">
+            Use the simulation to collect measurements. Then press <strong>Show calculation</strong> or <strong>Show conversion</strong> when needed.
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const materials = {
+      wood: { name: "Wood", density: 0.80, color: "#c08457" },
+      plastic: { name: "Plastic", density: 1.20, color: "#93c5fd" },
+      aluminium: { name: "Aluminium", density: 2.70, color: "#cbd5e1" },
+      iron: { name: "Iron", density: 7.90, color: "#94a3b8" },
+      copper: { name: "Copper", density: 8.90, color: "#b45309" }
+    };
+
+    const modeSelect = document.getElementById("modeSelect");
+    const shapeSelect = document.getElementById("shapeSelect");
+    const materialSelect = document.getElementById("materialSelect");
+    const dim1Slider = document.getElementById("dim1Slider");
+    const dim2Slider = document.getElementById("dim2Slider");
+    const dim3Slider = document.getElementById("dim3Slider");
+
+    const dim1Label = document.getElementById("dim1Label");
+    const dim2Label = document.getElementById("dim2Label");
+    const dim3Label = document.getElementById("dim3Label");
+
+    const shapeControl = document.getElementById("shapeControl");
+    const dim2Control = document.getElementById("dim2Control");
+    const dim3Control = document.getElementById("dim3Control");
+
+    const recordBtn = document.getElementById("recordBtn");
+    const calcBtn = document.getElementById("calcBtn");
+    const convertBtn = document.getElementById("convertBtn");
+    const dropBtn = document.getElementById("dropBtn");
+    const resetWaterBtn = document.getElementById("resetWaterBtn");
+    const clearBtn = document.getElementById("clearBtn");
+
+    const materialReading = document.getElementById("materialReading");
+    const massReading = document.getElementById("massReading");
+    const volumeReading = document.getElementById("volumeReading");
+    const densityReading = document.getElementById("densityReading");
+    const volumeLabel = document.getElementById("volumeLabel");
+
+    const resultsBody = document.getElementById("resultsBody");
+    const tableHeadRow = document.getElementById("tableHeadRow");
+    const tableIntro = document.getElementById("tableIntro");
+    const workingBox = document.getElementById("workingBox");
+
+    const simCanvas = document.getElementById("simCanvas");
+    const sctx = simCanvas.getContext("2d");
+
+    let results = [];
+    let showCalculation = false;
+    let showConversion = false;
+
+    let objectDropped = false;
+    let animatingDrop = false;
+    let dropProgress = 0;
+    let flowProgress = 0;
+    let fillProgress = 0;
+    let animationFrame = null;
+
+    function round(value, dp) {
+      const factor = Math.pow(10, dp);
+      return Math.round(value * factor) / factor;
+    }
+
+    function getCurrentMaterial() {
+      return materials[materialSelect.value];
+    }
+
+    function getCurrentState() {
+      const mode = modeSelect.value;
+      const shape = shapeSelect.value;
+      const material = getCurrentMaterial();
+
+      if (mode === "regular") {
+        const d1 = parseFloat(dim1Slider.value);
+        const d2 = shape === "cube" ? d1 : parseFloat(dim2Slider.value);
+        const d3 = shape === "cube" ? d1 : parseFloat(dim3Slider.value);
+        const volume = d1 * d2 * d3;
+        const density = material.density;
+        const mass = density * volume;
+
+        return {
+          mode,
+          shape,
+          materialName: material.name,
+          materialDensity: density,
+          materialColor: material.color,
+          massG: round(mass, 1),
+          d1: round(d1, 1),
+          d2: round(d2, 1),
+          d3: round(d3, 1),
+          volumeCm3: round(volume, 1),
+          densityGcm3: round(density, 2),
+          densityKgM3: round(density * 1000, 0)
+        };
+      }
+
+      const displaced = parseFloat(dim1Slider.value);
+      const density = material.density;
+      const mass = density * displaced;
+      const finalCylinder = objectDropped ? displaced * fillProgress : 0;
+
+      return {
+        mode,
+        shape: "irregular",
+        materialName: material.name,
+        materialDensity: density,
+        materialColor: material.color,
+        massG: round(mass, 1),
+        initialWater: 50.0,
+        displacedCm3: round(displaced, 1),
+        finalCylinderCm3: round(finalCylinder, 1),
+        volumeCm3: round(objectDropped ? displaced : 0, 1),
+        densityGcm3: round(density, 2),
+        densityKgM3: round(density * 1000, 0)
+      };
+    }
+
+    function updateControlsForMode() {
+      const mode = modeSelect.value;
+      if (mode === "regular") {
+        shapeControl.style.display = "";
+        dim2Control.style.display = shapeSelect.value === "cube" ? "none" : "";
+        dim3Control.style.display = shapeSelect.value === "cube" ? "none" : "";
+        dropBtn.style.display = "none";
+        resetWaterBtn.style.display = "none";
+
+        dim1Label.innerHTML = shapeSelect.value === "cube"
+          ? `Side length: <span id="dim1Value" class="value"></span>`
+          : `Length: <span id="dim1Value" class="value"></span>`;
+        dim2Label.innerHTML = `Width: <span id="dim2Value" class="value"></span>`;
+        dim3Label.innerHTML = `Height: <span id="dim3Value" class="value"></span>`;
+
+        volumeLabel.textContent = "Volume";
+        tableIntro.textContent = "Record the material, mass and dimensions, then calculate volume and density.";
+        tableHeadRow.innerHTML = `
+          <th>#</th>
+          <th>Material</th>
+          <th>Shape</th>
+          <th>Mass (g)</th>
+          <th>Volume (cm³)</th>
+          <th>Density (g/cm³)</th>
+        `;
+      } else {
+        shapeControl.style.display = "none";
+        dim2Control.style.display = "none";
+        dim3Control.style.display = "none";
+        dropBtn.style.display = "";
+        resetWaterBtn.style.display = "";
+
+        dim1Label.innerHTML = `Object volume by displacement: <span id="dim1Value" class="value"></span>`;
+        volumeLabel.textContent = "Displaced water";
+        tableIntro.textContent = "Use the displacement can and measuring cylinder to find the volume of the irregular solid, then calculate density.";
+        tableHeadRow.innerHTML = `
+          <th>#</th>
+          <th>Material</th>
+          <th>Mass (g)</th>
+          <th>Collected water (cm³)</th>
+          <th>Volume (cm³)</th>
+          <th>Density (g/cm³)</th>
+        `;
+      }
+    }
+
+    function refreshDisplayedValues() {
+      const d1El = document.getElementById("dim1Value");
+      const d2El = document.getElementById("dim2Value");
+      const d3El = document.getElementById("dim3Value");
+      const state = getCurrentState();
+
+      materialReading.textContent = state.materialName;
+      massReading.textContent = `${state.massG.toFixed(1)} g`;
+
+      if (state.mode === "regular") {
+        d1El.textContent = `${state.d1.toFixed(1)} cm`;
+        if (d2El) d2El.textContent = `${state.d2.toFixed(1)} cm`;
+        if (d3El) d3El.textContent = `${state.d3.toFixed(1)} cm`;
+        volumeReading.textContent = showCalculation ? `${state.volumeCm3.toFixed(1)} cm³` : "—";
+        densityReading.textContent = showCalculation ? `${state.densityGcm3.toFixed(2)} g/cm³` : "—";
+      } else {
+        d1El.textContent = `${state.displacedCm3.toFixed(1)} cm³`;
+        volumeReading.textContent = objectDropped ? `${state.volumeCm3.toFixed(1)} cm³` : "—";
+        densityReading.textContent = objectDropped && showCalculation ? `${state.densityGcm3.toFixed(2)} g/cm³` : "—";
+      }
+
+      updateWorkingBox(state);
+      drawSimulation(state);
+    }
+
+    function updateWorkingBox(state) {
+      if (!showCalculation && !showConversion) {
+        workingBox.innerHTML = `Use the simulation to collect measurements. Then press <strong>Show calculation</strong> or <strong>Show conversion</strong> when needed.`;
+        return;
+      }
+
+      let html = "";
+
+      if (showCalculation) {
+        if (state.mode === "regular") {
+          if (state.shape === "cube") {
+            html += `<strong>Volume calculation:</strong><br>
+            Volume = side × side × side<br>
+            = ${state.d1.toFixed(1)} × ${state.d1.toFixed(1)} × ${state.d1.toFixed(1)}<br>
+            = <strong>${state.volumeCm3.toFixed(1)} cm³</strong><br><br>
+            <strong>Mass from material density:</strong><br>
+            Mass = density × volume<br>
+            = ${state.densityGcm3.toFixed(2)} × ${state.volumeCm3.toFixed(1)}<br>
+            = <strong>${state.massG.toFixed(1)} g</strong><br><br>
+            Density = mass ÷ volume<br>
+            = ${state.massG.toFixed(1)} ÷ ${state.volumeCm3.toFixed(1)}<br>
+            = <strong>${state.densityGcm3.toFixed(2)} g/cm³</strong>`;
+          } else {
+            html += `<strong>Volume calculation:</strong><br>
+            Volume = length × width × height<br>
+            = ${state.d1.toFixed(1)} × ${state.d2.toFixed(1)} × ${state.d3.toFixed(1)}<br>
+            = <strong>${state.volumeCm3.toFixed(1)} cm³</strong><br><br>
+            <strong>Mass from material density:</strong><br>
+            Mass = density × volume<br>
+            = ${state.densityGcm3.toFixed(2)} × ${state.volumeCm3.toFixed(1)}<br>
+            = <strong>${state.massG.toFixed(1)} g</strong><br><br>
+            Density = mass ÷ volume<br>
+            = ${state.massG.toFixed(1)} ÷ ${state.volumeCm3.toFixed(1)}<br>
+            = <strong>${state.densityGcm3.toFixed(2)} g/cm³</strong>`;
+          }
+        } else {
+          if (!objectDropped) {
+            html += `Lower the object into the displacement can first.`;
+          } else {
+            html += `<strong>Displacement method:</strong><br>
+            Volume of object = volume of water collected<br>
+            = <strong>${state.volumeCm3.toFixed(1)} cm³</strong><br><br>
+            <strong>Mass from material density:</strong><br>
+            Mass = density × volume<br>
+            = ${state.densityGcm3.toFixed(2)} × ${state.volumeCm3.toFixed(1)}<br>
+            = <strong>${state.massG.toFixed(1)} g</strong><br><br>
+            Density = mass ÷ volume<br>
+            = ${state.massG.toFixed(1)} ÷ ${state.volumeCm3.toFixed(1)}<br>
+            = <strong>${state.densityGcm3.toFixed(2)} g/cm³</strong>`;
+          }
+        }
+      }
+
+      if (showConversion) {
+        if (html) html += `<br><br>`;
+        html += `<strong>Unit conversion:</strong><br>
+        1 g/cm³ = 1000 kg/m³<br>
+        ${state.densityGcm3.toFixed(2)} × 1000 = <strong>${state.densityKgM3.toFixed(0)} kg/m³</strong>`;
+      }
+
+      workingBox.innerHTML = html;
+    }
+
+    function drawBalance(ctx, x, y, width, readingText) {
+      ctx.save();
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+
+      ctx.fillStyle = "#e5e7eb";
+      ctx.fillRect(x, y, width, 48);
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, width, 48);
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "16px Arial";
+      ctx.fillText("Digital balance", x + 10, y - 10);
+
+      ctx.fillStyle = "#dbeafe";
+      ctx.fillRect(x + 120, y + 10, width - 140, 28);
+      ctx.strokeRect(x + 120, y + 10, width - 140, 28);
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "bold 18px Arial";
+      ctx.fillText(readingText, x + 135, y + 30);
+      ctx.restore();
+    }
+
+    function drawRegularSolid(ctx, state) {
+      drawBalance(ctx, 70, 40, 260, `${state.massG.toFixed(1)} g`);
+
+      const PX_PER_CM = 18;
+      ctx.fillStyle = state.materialColor;
+      ctx.strokeStyle = "#374151";
+      ctx.lineWidth = 2;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+
+      if (state.shape === "cube") {
+        const sidePx = state.d1 * PX_PER_CM;
+        const depth = Math.max(18, sidePx * 0.22);
+        const x = 240;
+        const y = 250 - sidePx / 2;
+
+        ctx.fillRect(x, y, sidePx, sidePx);
+        ctx.strokeRect(x, y, sidePx, sidePx);
+
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + depth, y - depth);
+        ctx.lineTo(x + sidePx + depth, y - depth);
+        ctx.lineTo(x + sidePx, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x + sidePx, y);
+        ctx.lineTo(x + sidePx + depth, y - depth);
+        ctx.lineTo(x + sidePx + depth, y + sidePx - depth);
+        ctx.lineTo(x + sidePx, y + sidePx);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#111827";
+        ctx.font = "16px Arial";
+        ctx.fillText(`Side = ${state.d1.toFixed(1)} cm`, x + 10, y + sidePx + 35);
+      } else {
+        const lengthPx = state.d1 * PX_PER_CM;
+        const heightPx = state.d3 * PX_PER_CM;
+        const widthPx = state.d2 * PX_PER_CM;
+        const depth = Math.max(20, widthPx * 0.45);
+
+        const x = 180;
+        const y = 270 - heightPx / 2;
+
+        ctx.fillRect(x, y, lengthPx, heightPx);
+        ctx.strokeRect(x, y, lengthPx, heightPx);
+
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + depth, y - depth);
+        ctx.lineTo(x + lengthPx + depth, y - depth);
+        ctx.lineTo(x + lengthPx, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x + lengthPx, y);
+        ctx.lineTo(x + lengthPx + depth, y - depth);
+        ctx.lineTo(x + lengthPx + depth, y + heightPx - depth);
+        ctx.lineTo(x + lengthPx, y + heightPx);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#111827";
+        ctx.font = "16px Arial";
+        ctx.fillText(`Length = ${state.d1.toFixed(1)} cm`, x, y + heightPx + 35);
+        ctx.fillText(`Width = ${state.d2.toFixed(1)} cm`, x + lengthPx + depth + 40, y + 8);
+        ctx.fillText(`Height = ${state.d3.toFixed(1)} cm`, x + lengthPx + depth + 40, y + 38);
+      }
+
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "14px Arial";
+      ctx.fillText(`Material: ${state.materialName}`, 470, 390);
+      ctx.fillText("Use the measurements shown to calculate volume.", 470, 420);
+    }
+
+    function drawDisplacementCan(ctx, x, y, width, height) {
+      ctx.save();
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y + height);
+      ctx.lineTo(x + width, y + height);
+      ctx.lineTo(x + width, y + 32);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + width - 14, y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x + width - 14, y + 18);
+      ctx.lineTo(x + width + 36, y + 18);
+      ctx.stroke();
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "15px Arial";
+      ctx.fillText("Displacement can", x + 10, y - 12);
+      ctx.restore();
+    }
+
+    function drawMeasuringCylinder(ctx, x, y, width, height, volumeCm3) {
+      ctx.save();
+      ctx.textBaseline = "alphabetic";
+
+      const maxVol = 100;
+      const innerPadding = 4;
+      const usableHeight = height - 8;
+      const fillHeight = (volumeCm3 / maxVol) * usableHeight;
+
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, width, height);
+
+      ctx.fillStyle = "#93c5fd";
+      ctx.fillRect(
+        x + innerPadding,
+        y + height - fillHeight - innerPadding,
+        width - innerPadding * 2,
+        fillHeight
+      );
+
+      ctx.strokeStyle = "#6b7280";
+      ctx.lineWidth = 1;
+
+      for (let i = 0; i <= 10; i++) {
+        const py = y + height - (i / 10) * height;
+        ctx.beginPath();
+        ctx.moveTo(x, py);
+        ctx.lineTo(x - 10, py);
+        ctx.stroke();
+
+        ctx.fillStyle = "#374151";
+        ctx.font = "11px Arial";
+        ctx.textAlign = "right";
+        ctx.fillText(String(i * 10), x - 14, py + 4);
+      }
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "15px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Measuring cylinder", x + width / 2, y - 12);
+
+      ctx.font = "bold 16px Arial";
+      ctx.fillText(`${volumeCm3.toFixed(1)} cm³`, x + width / 2, y + height + 34);
+
+      ctx.restore();
+    }
+
+    function drawRock(ctx, x, y, color) {
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.strokeStyle = "#374151";
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+      ctx.moveTo(x - 22, y - 8);
+      ctx.lineTo(x - 8, y - 24);
+      ctx.lineTo(x + 16, y - 18);
+      ctx.lineTo(x + 28, y);
+      ctx.lineTo(x + 18, y + 22);
+      ctx.lineTo(x - 6, y + 28);
+      ctx.lineTo(x - 24, y + 12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawAnimatedFlow(ctx, startX, startY, bendX, bendY, endX, endY, progress) {
+      if (progress <= 0) return;
+
+      ctx.save();
+      ctx.strokeStyle = "#60a5fa";
+      ctx.lineWidth = 6;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      const p1Length = Math.hypot(bendX - startX, bendY - startY);
+      const p2Length = Math.hypot(endX - bendX, endY - bendY);
+      const total = p1Length + p2Length;
+      const drawLength = total * progress;
+
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+
+      if (drawLength <= p1Length) {
+        const t = drawLength / p1Length;
+        ctx.lineTo(startX + (bendX - startX) * t, startY + (bendY - startY) * t);
+      } else {
+        ctx.lineTo(bendX, bendY);
+        const remain = drawLength - p1Length;
+        const t = Math.min(remain / p2Length, 1);
+        ctx.lineTo(bendX + (endX - bendX) * t, bendY + (endY - bendY) * t);
+      }
+
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawIrregularSolid(ctx, state) {
+      drawBalance(ctx, 60, 40, 260, `${state.massG.toFixed(1)} g`);
+
+      const canX = 110;
+      const canY = 170;
+      const canW = 150;
+      const canH = 190;
+
+      const cylinderX = 500;
+      const cylinderY = 130;
+      const cylinderW = 80;
+      const cylinderH = 280;
+
+      drawDisplacementCan(ctx, canX, canY, canW, canH);
+
+      ctx.fillStyle = "#93c5fd";
+      ctx.fillRect(canX + 2, canY + 74, canW - 4, canH - 76);
+
+      const startRockX = 320;
+      const startRockY = 245;
+      const targetRockX = canX + 55;
+      const targetRockY = canY + 150;
+
+      let rockX = startRockX;
+      let rockY = startRockY;
+
+      if (animatingDrop) {
+        rockX = startRockX + (targetRockX - startRockX) * dropProgress;
+        rockY = startRockY + (targetRockY - startRockY) * dropProgress;
+      } else if (objectDropped) {
+        rockX = targetRockX;
+        rockY = targetRockY;
+      }
+
+      drawRock(ctx, rockX, rockY, state.materialColor);
+
+      if (!objectDropped && !animatingDrop) {
+        ctx.fillStyle = "#6b7280";
+        ctx.font = "14px Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+        ctx.fillText("Click 'Lower object into can'", 280, 300);
+      }
+
+      drawMeasuringCylinder(ctx, cylinderX, cylinderY, cylinderW, cylinderH, state.finalCylinderCm3);
+
+      const flowStartX = canX + canW + 36;
+      const flowStartY = canY + 18;
+      const flowBendX = cylinderX - 10;
+      const flowBendY = canY + 18;
+      const flowEndX = cylinderX + 20;
+      const flowEndY = cylinderY + 60;
+
+      if (animatingDrop || objectDropped) {
+        drawAnimatedFlow(
+          ctx,
+          flowStartX, flowStartY,
+          flowBendX, flowBendY,
+          flowEndX, flowEndY,
+          flowProgress
+        );
+      }
+
+      ctx.fillStyle = "#111827";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+
+      ctx.font = "15px Arial";
+      ctx.fillText(`Material: ${state.materialName}`, cylinderX + cylinderW / 2, cylinderY + cylinderH + 78);
+
+      ctx.font = "15px Arial";
+      ctx.fillText("Collected water = object volume", cylinderX + cylinderW / 2, cylinderY + cylinderH + 126);
+    }
+
+    function drawSimulation(state) {
+      sctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+      sctx.fillStyle = "#fcfcfd";
+      sctx.fillRect(0, 0, simCanvas.width, simCanvas.height);
+
+      if (state.mode === "regular") {
+        drawRegularSolid(sctx, state);
+      } else {
+        drawIrregularSolid(sctx, state);
+      }
+    }
+
+    function renderTable() {
+      if (!results.length) {
+        resultsBody.innerHTML = '<tr><td colspan="6" class="small">No readings recorded yet.</td></tr>';
+        return;
+      }
+
+      if (modeSelect.value === "regular") {
+        resultsBody.innerHTML = results.map((r, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${r.materialName}</td>
+            <td>${r.shape === "cube" ? "Cube" : "Cuboid"}</td>
+            <td>${r.massG.toFixed(1)}</td>
+            <td>${r.volumeCm3.toFixed(1)}</td>
+            <td>${r.densityGcm3.toFixed(2)}</td>
+          </tr>
+        `).join("");
+      } else {
+        resultsBody.innerHTML = results.map((r, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${r.materialName}</td>
+            <td>${r.massG.toFixed(1)}</td>
+            <td>${r.finalCylinderCm3.toFixed(1)}</td>
+            <td>${r.volumeCm3.toFixed(1)}</td>
+            <td>${r.densityGcm3.toFixed(2)}</td>
+          </tr>
+        `).join("");
+      }
+    }
+
+    function cancelAnimationIfNeeded() {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = null;
+      }
+      animatingDrop = false;
+    }
+
+    function startDropAnimation() {
+      cancelAnimationIfNeeded();
+      animatingDrop = true;
+      objectDropped = false;
+      dropProgress = 0;
+      flowProgress = 0;
+      fillProgress = 0;
+
+      const durationDrop = 900;
+      const durationFlow = 900;
+      const durationFill = 900;
+      let startTime = null;
+
+      function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+
+        if (elapsed <= durationDrop) {
+          dropProgress = elapsed / durationDrop;
+          flowProgress = 0;
+          fillProgress = 0;
+        } else if (elapsed <= durationDrop + durationFlow) {
+          dropProgress = 1;
+          flowProgress = (elapsed - durationDrop) / durationFlow;
+          fillProgress = 0;
+        } else if (elapsed <= durationDrop + durationFlow + durationFill) {
+          dropProgress = 1;
+          flowProgress = 1;
+          fillProgress = (elapsed - durationDrop - durationFlow) / durationFill;
+        } else {
+          dropProgress = 1;
+          flowProgress = 1;
+          fillProgress = 1;
+          animatingDrop = false;
+          objectDropped = true;
+          refreshDisplayedValues();
+          animationFrame = null;
+          return;
+        }
+
+        refreshDisplayedValues();
+        animationFrame = requestAnimationFrame(step);
+      }
+
+      animationFrame = requestAnimationFrame(step);
+    }
+
+    modeSelect.addEventListener("change", () => {
+      cancelAnimationIfNeeded();
+      objectDropped = false;
+      showCalculation = false;
+      showConversion = false;
+      dropProgress = 0;
+      flowProgress = 0;
+      fillProgress = 0;
+      calcBtn.textContent = "Show calculation";
+      convertBtn.textContent = "Show conversion";
+      updateControlsForMode();
+      refreshDisplayedValues();
+      renderTable();
+    });
+
+    shapeSelect.addEventListener("change", () => {
+      updateControlsForMode();
+      refreshDisplayedValues();
+    });
+
+    materialSelect.addEventListener("change", refreshDisplayedValues);
+
+    [dim1Slider, dim2Slider, dim3Slider].forEach(el => {
+      el.addEventListener("input", refreshDisplayedValues);
+      el.addEventListener("change", refreshDisplayedValues);
+    });
+
+    dropBtn.addEventListener("click", () => {
+      startDropAnimation();
+    });
+
+    resetWaterBtn.addEventListener("click", () => {
+      cancelAnimationIfNeeded();
+      objectDropped = false;
+      dropProgress = 0;
+      flowProgress = 0;
+      fillProgress = 0;
+      refreshDisplayedValues();
+    });
+
+    recordBtn.addEventListener("click", () => {
+      const state = getCurrentState();
+      if (state.mode === "irregular" && !objectDropped) {
+        workingBox.innerHTML = "Lower the object into the displacement can and wait for the water to collect before recording a reading.";
+        return;
+      }
+      results.push({ ...state });
+      renderTable();
+    });
+
+    calcBtn.addEventListener("click", () => {
+      showCalculation = !showCalculation;
+      calcBtn.textContent = showCalculation ? "Hide calculation" : "Show calculation";
+      refreshDisplayedValues();
+    });
+
+    convertBtn.addEventListener("click", () => {
+      showConversion = !showConversion;
+      convertBtn.textContent = showConversion ? "Hide conversion" : "Show conversion";
+      refreshDisplayedValues();
+    });
+
+    clearBtn.addEventListener("click", () => {
+      results = [];
+      renderTable();
+      workingBox.innerHTML = `Use the simulation to collect measurements. Then press <strong>Show calculation</strong> or <strong>Show conversion</strong> when needed.`;
+    });
+
+    updateControlsForMode();
+    refreshDisplayedValues();
+    renderTable();
+  </script>
+</body>
+</html>
