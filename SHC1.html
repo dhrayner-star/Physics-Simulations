@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Specific Heat Capacity Simulation</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #2563eb;
+      --accent2: #0f766e;
+      --warn: #b45309;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .wrap {
+      max-width: 1450px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.95rem;
+    }
+
+    .intro {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.38fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .control {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .control label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .value {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: white;
+      font-size: 0.95rem;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+
+    button.secondary { background: var(--accent2); }
+    button.warn { background: var(--warn); }
+    button.ghost {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .stat .label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat .big {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .sim-area {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .side-grid {
+      display: grid;
+      grid-template-rows: auto auto;
+      gap: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      text-align: center;
+    }
+
+    th { background: #f3f4f6; }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .info-box {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      min-height: 72px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    @media (max-width: 1080px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 780px) {
+      .controls, .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Specific Heat Capacity Simulation</h1>
+    <p class="intro">
+      Heat different materials using an immersion heater. Record the energy supplied, mass, initial temperature and final temperature, then calculate specific heat capacity.
+    </p>
+
+    <div class="layout">
+      <section class="card">
+        <div class="controls">
+          <div class="control">
+            <label for="materialSelect">Material</label>
+            <select id="materialSelect">
+              <option value="aluminium">Aluminium</option>
+              <option value="copper">Copper</option>
+              <option value="iron">Iron</option>
+              <option value="lead">Lead</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label for="massSlider">Mass: <span id="massValue" class="value">1.00 kg</span></label>
+            <input id="massSlider" type="range" min="0.25" max="2.00" step="0.05" value="1.00" />
+          </div>
+
+          <div class="control">
+            <label for="powerSlider">Heater power: <span id="powerValue" class="value">50 W</span></label>
+            <input id="powerSlider" type="range" min="20" max="100" step="5" value="50" />
+          </div>
+
+          <div class="control">
+            <label>Starting temperature</label>
+            <strong>20.0 °C</strong>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="startBtn">Start heating</button>
+          <button id="stopBtn" class="warn">Stop heating</button>
+          <button id="resetBtn" class="ghost">Reset</button>
+          <button id="recordBtn" class="secondary">Record reading</button>
+          <button id="calcBtn" class="secondary">Show calculation</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Temperature</div>
+            <div class="big" id="tempReading">20.0 °C</div>
+          </div>
+          <div class="stat">
+            <div class="label">Energy supplied</div>
+            <div class="big" id="energyReading">0 J</div>
+          </div>
+          <div class="stat">
+            <div class="label">Time</div>
+            <div class="big" id="timeReading">0 s</div>
+          </div>
+          <div class="stat">
+            <div class="label">Material</div>
+            <div class="big" id="materialReading">Aluminium</div>
+          </div>
+        </div>
+
+        <div class="sim-area">
+          <canvas id="simCanvas" width="900" height="560"></canvas>
+        </div>
+      </section>
+
+      <div class="side-grid">
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;">Results table</h2>
+          <p class="small">
+            Record the initial and final temperature, energy supplied and mass. Then calculate specific heat capacity.
+          </p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Material</th>
+                <th>Mass (kg)</th>
+                <th>Energy (J)</th>
+                <th>Initial T (°C)</th>
+                <th>Final T (°C)</th>
+                <th>ΔT (°C)</th>
+                <th>c (J/kg°C)</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <tr><td colspan="8" class="small">No readings recorded yet.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <h2 style="margin-top:0; font-size:1.25rem;">Working area</h2>
+          <div class="info-box" id="workingBox">
+            Use <strong>c = E ÷ (m × ΔT)</strong>. Heat the block, record a reading, then show the calculation.
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const materials = {
+      aluminium: { name: "Aluminium", c: 900, color: "#cbd5e1" },
+      copper: { name: "Copper", c: 385, color: "#b45309" },
+      iron: { name: "Iron", c: 450, color: "#94a3b8" },
+      lead: { name: "Lead", c: 130, color: "#64748b" }
+    };
+
+    const materialSelect = document.getElementById("materialSelect");
+    const massSlider = document.getElementById("massSlider");
+    const powerSlider = document.getElementById("powerSlider");
+
+    const massValue = document.getElementById("massValue");
+    const powerValue = document.getElementById("powerValue");
+
+    const tempReading = document.getElementById("tempReading");
+    const energyReading = document.getElementById("energyReading");
+    const timeReading = document.getElementById("timeReading");
+    const materialReading = document.getElementById("materialReading");
+
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const recordBtn = document.getElementById("recordBtn");
+    const calcBtn = document.getElementById("calcBtn");
+
+    const resultsBody = document.getElementById("resultsBody");
+    const workingBox = document.getElementById("workingBox");
+
+    const simCanvas = document.getElementById("simCanvas");
+    const ctx = simCanvas.getContext("2d");
+
+    const initialTemp = 20.0;
+    let temperature = initialTemp;
+    let energy = 0;
+    let time = 0;
+    let heating = false;
+    let lastTimestamp = null;
+    let animationFrame = null;
+    let results = [];
+    let showCalculation = false;
+
+    function currentMaterial() {
+      return materials[materialSelect.value];
+    }
+
+    function currentMass() {
+      return parseFloat(massSlider.value);
+    }
+
+    function currentPower() {
+      return parseFloat(powerSlider.value);
+    }
+
+    function round(value, dp) {
+      const factor = Math.pow(10, dp);
+      return Math.round(value * factor) / factor;
+    }
+
+    function updateLabels() {
+      const mat = currentMaterial();
+      massValue.textContent = `${currentMass().toFixed(2)} kg`;
+      powerValue.textContent = `${currentPower().toFixed(0)} W`;
+      materialReading.textContent = mat.name;
+      tempReading.textContent = `${temperature.toFixed(1)} °C`;
+      energyReading.textContent = `${Math.round(energy)} J`;
+      timeReading.textContent = `${Math.round(time)} s`;
+      drawSimulation();
+    }
+
+    function drawThermometer(x, y, temp) {
+      ctx.save();
+
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, 24, 180);
+      ctx.beginPath();
+      ctx.arc(x + 12, y + 200, 22, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const maxTemp = 100;
+      const minTemp = 20;
+      const clamped = Math.max(minTemp, Math.min(maxTemp, temp));
+      const fillHeight = ((clamped - minTemp) / (maxTemp - minTemp)) * 170;
+
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(x + 4, y + 176 - fillHeight, 16, fillHeight);
+      ctx.beginPath();
+      ctx.arc(x + 12, y + 200, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "15px Arial";
+      ctx.fillText("Thermometer", x - 35, y - 14);
+      ctx.fillText(`${temp.toFixed(1)} °C`, x - 18, y + 240);
+
+      ctx.restore();
+    }
+
+    function drawSimulation() {
+      const mat = currentMaterial();
+
+      ctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+      ctx.fillStyle = "#fcfcfd";
+      ctx.fillRect(0, 0, simCanvas.width, simCanvas.height);
+
+      // bench
+      ctx.fillStyle = "#e5e7eb";
+      ctx.fillRect(70, 430, 760, 20);
+
+      // insulation mat
+      ctx.fillStyle = "#fef3c7";
+      ctx.strokeStyle = "#92400e";
+      ctx.lineWidth = 2;
+      ctx.fillRect(250, 370, 270, 60);
+      ctx.strokeRect(250, 370, 270, 60);
+      ctx.fillStyle = "#92400e";
+      ctx.font = "15px Arial";
+      ctx.fillText("insulation", 350, 405);
+
+      // metal block
+      ctx.fillStyle = mat.color;
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      ctx.fillRect(290, 230, 190, 140);
+      ctx.strokeRect(290, 230, 190, 140);
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "18px Arial";
+      ctx.fillText(mat.name + " block", 320, 215);
+
+      // heater hole
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(330, 180);
+      ctx.lineTo(330, 310);
+      ctx.stroke();
+
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(322, 275, 16, 70);
+      ctx.fillStyle = "#111827";
+      ctx.font = "14px Arial";
+      ctx.fillText("immersion heater", 270, 170);
+
+      // thermometer
+      drawThermometer(550, 150, temperature);
+
+      // wires
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(330, 180);
+      ctx.lineTo(330, 110);
+      ctx.lineTo(160, 110);
+      ctx.stroke();
+
+      // power supply / joulemeter
+      ctx.fillStyle = "#dbeafe";
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      ctx.fillRect(80, 90, 130, 90);
+      ctx.strokeRect(80, 90, 130, 90);
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "16px Arial";
+      ctx.fillText("Joulemeter", 105, 120);
+      ctx.font = "15px Arial";
+      ctx.fillText(`${Math.round(energy)} J`, 116, 150);
+
+      // balance/mass
+      ctx.fillStyle = "#f3f4f6";
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 2;
+      ctx.fillRect(620, 360, 170, 55);
+      ctx.strokeRect(620, 360, 170, 55);
+      ctx.fillStyle = "#111827";
+      ctx.font = "15px Arial";
+      ctx.fillText("Mass", 640, 382);
+      ctx.font = "bold 16px Arial";
+      ctx.fillText(`${currentMass().toFixed(2)} kg`, 690, 382);
+
+      if (heating) {
+        ctx.fillStyle = "#f97316";
+        ctx.font = "bold 18px Arial";
+        ctx.fillText("Heating...", 340, 395);
+      }
+    }
+
+    function step(timestamp) {
+      if (!heating) return;
+
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const dt = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      const power = currentPower();
+      const mass = currentMass();
+      const c = currentMaterial().c;
+
+      const addedEnergy = power * dt;
+      energy += addedEnergy;
+      time += dt;
+
+      const tempIncrease = addedEnergy / (mass * c);
+      temperature += tempIncrease;
+
+      if (temperature >= 100) {
+        temperature = 100;
+        heating = false;
+      }
+
+      updateLabels();
+
+      if (heating) {
+        animationFrame = requestAnimationFrame(step);
+      }
+    }
+
+    function startHeating() {
+      if (heating) return;
+      heating = true;
+      lastTimestamp = null;
+      animationFrame = requestAnimationFrame(step);
+    }
+
+    function stopHeating() {
+      heating = false;
+      lastTimestamp = null;
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+    }
+
+    function resetSimulation() {
+      stopHeating();
+      temperature = initialTemp;
+      energy = 0;
+      time = 0;
+      showCalculation = false;
+      calcBtn.textContent = "Show calculation";
+      workingBox.innerHTML = `Use <strong>c = E ÷ (m × ΔT)</strong>. Heat the block, record a reading, then show the calculation.`;
+      updateLabels();
+    }
+
+    function recordReading() {
+      const deltaT = temperature - initialTemp;
+      if (deltaT <= 0 || energy <= 0) {
+        workingBox.innerHTML = "Heat the block first before recording a reading.";
+        return;
+      }
+
+      const mass = currentMass();
+      const cMeasured = energy / (mass * deltaT);
+
+      results.push({
+        material: currentMaterial().name,
+        mass,
+        energy,
+        initialTemp,
+        finalTemp: temperature,
+        deltaT,
+        c: cMeasured
+      });
+
+      renderTable();
+    }
+
+    function renderTable() {
+      if (!results.length) {
+        resultsBody.innerHTML = '<tr><td colspan="8" class="small">No readings recorded yet.</td></tr>';
+        return;
+      }
+
+      resultsBody.innerHTML = results.map((r, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${r.material}</td>
+          <td>${r.mass.toFixed(2)}</td>
+          <td>${Math.round(r.energy)}</td>
+          <td>${r.initialTemp.toFixed(1)}</td>
+          <td>${r.finalTemp.toFixed(1)}</td>
+          <td>${r.deltaT.toFixed(1)}</td>
+          <td>${Math.round(r.c)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function showCalc() {
+      showCalculation = !showCalculation;
+      calcBtn.textContent = showCalculation ? "Hide calculation" : "Show calculation";
+
+      if (!showCalculation) {
+        workingBox.innerHTML = `Use <strong>c = E ÷ (m × ΔT)</strong>. Heat the block, record a reading, then show the calculation.`;
+        return;
+      }
+
+      const deltaT = temperature - initialTemp;
+
+      if (deltaT <= 0 || energy <= 0) {
+        workingBox.innerHTML = "Heat the block first before calculating specific heat capacity.";
+        return;
+      }
+
+      const mass = currentMass();
+      const cMeasured = energy / (mass * deltaT);
+
+      workingBox.innerHTML = `
+        <strong>Specific heat capacity calculation:</strong><br>
+        c = E ÷ (m × ΔT)<br>
+        E = ${Math.round(energy)} J<br>
+        m = ${mass.toFixed(2)} kg<br>
+        ΔT = ${deltaT.toFixed(1)} °C<br><br>
+        c = ${Math.round(energy)} ÷ (${mass.toFixed(2)} × ${deltaT.toFixed(1)})<br>
+        c = <strong>${Math.round(cMeasured)} J/kg°C</strong>
+      `;
+    }
+
+    materialSelect.addEventListener("change", resetSimulation);
+    massSlider.addEventListener("input", () => {
+      resetSimulation();
+      updateLabels();
+    });
+    powerSlider.addEventListener("input", updateLabels);
+
+    startBtn.addEventListener("click", startHeating);
+    stopBtn.addEventListener("click", stopHeating);
+    resetBtn.addEventListener("click", resetSimulation);
+    recordBtn.addEventListener("click", recordReading);
+    calcBtn.addEventListener("click", showCalc);
+
+    updateLabels();
+    renderTable();
+  </script>
+</body>
+</html>
