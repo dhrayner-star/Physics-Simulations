@@ -418,8 +418,8 @@
 
       ctx.restore();
 
-      labelText("Thermometer", x - 45, y - 24);
-      labelText(`${temp.toFixed(1)} °C`, x - 20, y + 255);
+      labelText("Thermometer", x - 38, y - 8);
+      labelText(`${temp.toFixed(1)} °C`, x - 20, y + 272);
     }
 
     function drawSimulation() {
@@ -459,7 +459,7 @@
 
       ctx.fillStyle = "#ef4444";
       ctx.fillRect(292, 275, 16, 70);
-      labelText("Immersion heater", 215, 165);
+      labelText("Immersion heater", 180, 195);
 
       // wires routed higher
       ctx.strokeStyle = "#111827";
@@ -484,21 +484,20 @@
       ctx.fillText(`${Math.round(energy)} J`, 116, 150);
 
       // thermometer moved right
-      drawThermometer(675, 145, temperature);
+      drawThermometer(610, 165, temperature);
 
       // mass display
       ctx.fillStyle = "#f3f4f6";
       ctx.strokeStyle = "#111827";
       ctx.lineWidth = 2;
-      ctx.fillRect(650, 370, 170, 55);
-      ctx.strokeRect(650, 370, 170, 55);
+      ctx.fillRect(690, 390, 150, 50);
+      ctx.strokeRect(690, 390, 150, 50);
 
       ctx.fillStyle = "#111827";
       ctx.font = "15px Arial";
-      ctx.fillText("Mass", 670, 392);
+      ctx.fillText("Mass", 705, 418);
       ctx.font = "bold 16px Arial";
-      ctx.fillText(`${currentMass().toFixed(2)} kg`, 720, 392);
-
+      ctx.fillText(`${currentMass().toFixed(2)} kg`, 745, 418);
       if (heating) {
         labelText("Heating...", 330, 418, 18);
       }
