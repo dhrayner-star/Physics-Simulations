@@ -114,6 +114,7 @@
 
     button.secondary { background: var(--accent2); }
     button.warn { background: var(--warn); }
+
     button.ghost {
       background: white;
       color: var(--ink);
@@ -344,6 +345,7 @@
     const ctx = simCanvas.getContext("2d");
 
     const initialTemp = 20.0;
+
     let temperature = initialTemp;
     let energy = 0;
     let time = 0;
@@ -365,143 +367,142 @@
       return parseFloat(powerSlider.value);
     }
 
-    function round(value, dp) {
-      const factor = Math.pow(10, dp);
-      return Math.round(value * factor) / factor;
-    }
-
     function updateLabels() {
       const mat = currentMaterial();
+
       massValue.textContent = `${currentMass().toFixed(2)} kg`;
       powerValue.textContent = `${currentPower().toFixed(0)} W`;
       materialReading.textContent = mat.name;
       tempReading.textContent = `${temperature.toFixed(1)} °C`;
       energyReading.textContent = `${Math.round(energy)} J`;
       timeReading.textContent = `${Math.round(time)} s`;
+
       drawSimulation();
     }
 
+    function labelText(text, x, y, size = 15) {
+      ctx.save();
+      ctx.font = `${size}px Arial`;
+
+      const width = ctx.measureText(text).width + 12;
+      ctx.fillStyle = "rgba(255,255,255,0.93)";
+      ctx.fillRect(x - 6, y - size - 3, width, size + 8);
+
+      ctx.fillStyle = "#111827";
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    }
+
     function drawThermometer(x, y, temp) {
-  ctx.save();
+      ctx.save();
 
-  ctx.strokeStyle = "#111827";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(x, y, 24, 180);
-  ctx.beginPath();
-  ctx.arc(x + 12, y + 200, 22, 0, Math.PI * 2);
-  ctx.stroke();
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, 24, 180);
 
-  const maxTemp = 100;
-  const minTemp = 20;
-  const clamped = Math.max(minTemp, Math.min(maxTemp, temp));
-  const fillHeight = ((clamped - minTemp) / (maxTemp - minTemp)) * 170;
+      ctx.beginPath();
+      ctx.arc(x + 12, y + 200, 22, 0, Math.PI * 2);
+      ctx.stroke();
 
-  ctx.fillStyle = "#ef4444";
-  ctx.fillRect(x + 4, y + 176 - fillHeight, 16, fillHeight);
-  ctx.beginPath();
-  ctx.arc(x + 12, y + 200, 16, 0, Math.PI * 2);
-  ctx.fill();
+      const maxTemp = 100;
+      const minTemp = 20;
+      const clamped = Math.max(minTemp, Math.min(maxTemp, temp));
+      const fillHeight = ((clamped - minTemp) / (maxTemp - minTemp)) * 170;
 
-  ctx.fillStyle = "#111827";
-  ctx.font = "15px Arial";
-  ctx.fillText("Thermometer", x - 35, y - 14);
-  ctx.fillText(`${temp.toFixed(1)} °C`, x - 18, y + 260);
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(x + 4, y + 176 - fillHeight, 16, fillHeight);
 
-  ctx.restore();
-}
+      ctx.beginPath();
+      ctx.arc(x + 12, y + 200, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      labelText("Thermometer", x - 45, y - 24);
+      labelText(`${temp.toFixed(1)} °C`, x - 20, y + 255);
+    }
 
     function drawSimulation() {
-  const mat = currentMaterial();
+      const mat = currentMaterial();
 
-  ctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
-  ctx.fillStyle = "#fcfcfd";
-  ctx.fillRect(0, 0, simCanvas.width, simCanvas.height);
+      ctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+      ctx.fillStyle = "#fcfcfd";
+      ctx.fillRect(0, 0, simCanvas.width, simCanvas.height);
 
-  // bench
-  ctx.fillStyle = "#e5e7eb";
-  ctx.fillRect(70, 445, 760, 20);
+      // bench
+      ctx.fillStyle = "#e5e7eb";
+      ctx.fillRect(70, 455, 760, 20);
 
-  // insulation mat
-  ctx.fillStyle = "#fef3c7";
-  ctx.strokeStyle = "#92400e";
-  ctx.lineWidth = 2;
-  ctx.fillRect(220, 370, 300, 60);
-  ctx.strokeRect(220, 370, 300, 60);
+      // insulation block
+      ctx.fillStyle = "#fef3c7";
+      ctx.strokeStyle = "#92400e";
+      ctx.lineWidth = 2;
+      ctx.fillRect(220, 370, 300, 60);
+      ctx.strokeRect(220, 370, 300, 60);
+      labelText("Insulation block", 305, 455);
 
-  ctx.fillStyle = "#92400e";
-  ctx.font = "15px Arial";
-  ctx.fillText("Insulation block", 325, 455);
+      // metal block
+      ctx.fillStyle = mat.color;
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      ctx.fillRect(250, 230, 190, 140);
+      ctx.strokeRect(250, 230, 190, 140);
+      labelText(`${mat.name} block`, 265, 205, 16);
 
-  // metal block
-  ctx.fillStyle = mat.color;
-  ctx.strokeStyle = "#111827";
-  ctx.lineWidth = 3;
-  ctx.fillRect(250, 230, 190, 140);
-  ctx.strokeRect(250, 230, 190, 140);
+      // immersion heater
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(300, 180);
+      ctx.lineTo(300, 310);
+      ctx.stroke();
 
-  ctx.fillStyle = "#111827";
-  ctx.font = "18px Arial";
-  ctx.fillText(mat.name + " block", 270, 200);
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(292, 275, 16, 70);
+      labelText("Immersion heater", 215, 165);
 
-  // heater
-  ctx.strokeStyle = "#111827";
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(300, 180);
-  ctx.lineTo(300, 310);
-  ctx.stroke();
+      // wires routed higher
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(300, 180);
+      ctx.lineTo(300, 90);
+      ctx.lineTo(210, 90);
+      ctx.stroke();
 
-  ctx.fillStyle = "#ef4444";
-  ctx.fillRect(292, 275, 16, 70);
+      // joulemeter
+      ctx.fillStyle = "#dbeafe";
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 3;
+      ctx.fillRect(80, 90, 130, 90);
+      ctx.strokeRect(80, 90, 130, 90);
 
-  ctx.fillStyle = "#111827";
-  ctx.font = "14px Arial";
-  ctx.fillText("Immersion heater", 235, 170);
+      ctx.fillStyle = "#111827";
+      ctx.font = "16px Arial";
+      ctx.fillText("Joulemeter", 105, 120);
+      ctx.font = "15px Arial";
+      ctx.fillText(`${Math.round(energy)} J`, 116, 150);
 
-  // thermometer moved right
-  drawThermometer(620, 150, temperature);
+      // thermometer moved right
+      drawThermometer(675, 145, temperature);
 
-  // wires
-  ctx.strokeStyle = "#111827";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(300, 180);
-  ctx.lineTo(300, 110);
-  ctx.lineTo(160, 110);
-  ctx.stroke();
+      // mass display
+      ctx.fillStyle = "#f3f4f6";
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 2;
+      ctx.fillRect(650, 370, 170, 55);
+      ctx.strokeRect(650, 370, 170, 55);
 
-  // joulemeter
-  ctx.fillStyle = "#dbeafe";
-  ctx.strokeStyle = "#111827";
-  ctx.lineWidth = 3;
-  ctx.fillRect(80, 90, 130, 90);
-  ctx.strokeRect(80, 90, 130, 90);
+      ctx.fillStyle = "#111827";
+      ctx.font = "15px Arial";
+      ctx.fillText("Mass", 670, 392);
+      ctx.font = "bold 16px Arial";
+      ctx.fillText(`${currentMass().toFixed(2)} kg`, 720, 392);
 
-  ctx.fillStyle = "#111827";
-  ctx.font = "16px Arial";
-  ctx.fillText("Joulemeter", 105, 120);
-  ctx.font = "15px Arial";
-  ctx.fillText(`${Math.round(energy)} J`, 116, 150);
-
-  // mass display
-  ctx.fillStyle = "#f3f4f6";
-  ctx.strokeStyle = "#111827";
-  ctx.lineWidth = 2;
-  ctx.fillRect(650, 360, 170, 55);
-  ctx.strokeRect(650, 360, 170, 55);
-
-  ctx.fillStyle = "#111827";
-  ctx.font = "15px Arial";
-  ctx.fillText("Mass", 670, 382);
-  ctx.font = "bold 16px Arial";
-  ctx.fillText(`${currentMass().toFixed(2)} kg`, 720, 382);
-
-  if (heating) {
-    ctx.fillStyle = "#f97316";
-    ctx.font = "bold 18px Arial";
-    ctx.fillText("Heating...", 320, 420);
-  }
-}
+      if (heating) {
+        labelText("Heating...", 330, 418, 18);
+      }
+    }
 
     function step(timestamp) {
       if (!heating) return;
@@ -543,7 +544,10 @@
     function stopHeating() {
       heating = false;
       lastTimestamp = null;
-      if (animationFrame) cancelAnimationFrame(animationFrame);
+
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
     }
 
     function resetSimulation() {
@@ -559,6 +563,7 @@
 
     function recordReading() {
       const deltaT = temperature - initialTemp;
+
       if (deltaT <= 0 || energy <= 0) {
         workingBox.innerHTML = "Heat the block first before recording a reading.";
         return;
@@ -631,11 +636,13 @@
     }
 
     materialSelect.addEventListener("change", resetSimulation);
-    massSlider.addEventListener("input", () => {
-      resetSimulation();
-      updateLabels();
+
+    massSlider.addEventListener("input", resetSimulation);
+
+    powerSlider.addEventListener("input", () => {
+      powerValue.textContent = `${currentPower().toFixed(0)} W`;
+      drawSimulation();
     });
-    powerSlider.addEventListener("input", updateLabels);
 
     startBtn.addEventListener("click", startHeating);
     stopBtn.addEventListener("click", stopHeating);
